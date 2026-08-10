@@ -111,4 +111,7 @@ class TractionCalculateur(MoteurCalcul):
             energie_rupture_moyenne_joules=energie_moyenne,
             limite_elastique_moyenne_mpa=limite_moyenne,
             statut=statut,
+            deformation_moyenne_pourcent=deformation_moyenne,
+            ecart_type_deformation_pourcent=ecart_type_deformation,
+            ecart_type_module_young_mpa=ecart_type_module_young,
         )

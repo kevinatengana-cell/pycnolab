@@ -143,3 +143,6 @@ class ResultatGamme:
     statut: StatutConformite
     energie_rupture_moyenne_joules: Optional[float] = None
     limite_elastique_moyenne_mpa: Optional[float] = None
+    deformation_moyenne_pourcent: Optional[float] = None
+    ecart_type_deformation_pourcent: Optional[float] = None
+    ecart_type_module_young_mpa: Optional[float] = None

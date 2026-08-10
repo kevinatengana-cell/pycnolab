@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'config_essai_screen.dart';
+import 'compare_screen.dart';
+import '../services/history_service.dart';
+import '../models/resultat_gamme.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final Set<ResultatGamme> _selectedLots = {};
+
+  @override
   Widget build(BuildContext context) {
+    final history = HistoryService.instance.history;
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A), // Slate-900 (Dark Mode)
       appBar: AppBar(
@@ -82,11 +93,12 @@ class HomeScreen extends StatelessWidget {
                   color: Colors.blue,
                   badgeText: "Prêt",
                   badgeColor: Colors.green,
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const ConfigEssaiScreen()),
                     );
+                    setState(() {});
                   },
                 ),
 
@@ -136,12 +148,12 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // 3. Section Historique / Activité récente
+            // 3. Section Historique / Activité récente (dynamique)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "RÉCENTS RAPPORT S SÉLECTIONNÉS",
+                  "LOTS EN MÉMOIRE POUR COMPARAISON",
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -149,47 +161,101 @@ class HomeScreen extends StatelessWidget {
                     letterSpacing: 1.1,
                   ),
                 ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Voir tout l'historique"),
+                ElevatedButton.icon(
+                  onPressed: _selectedLots.length >= 2
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CompareScreen(selectedLots: _selectedLots.toList()),
+                            ),
+                          );
+                        }
+                      : null,
+                  icon: const Icon(Icons.compare_arrows),
+                  label: Text("Comparer les lots (${_selectedLots.length})"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.white10,
+                    disabledForegroundColor: Colors.white30,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            Card(
-              elevation: 0,
-              color: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFF334155)),
-              ),
-              child: ListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Color(0xFFDCFCE7),
-                      child: Icon(Icons.check_circle_outline, color: Colors.green),
+            if (history.isEmpty)
+              const Card(
+                color: Color(0xFF1E293B),
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text(
+                      "Aucun lot importé pour le moment.\nConfigurez un essai et importez un fichier Excel pour commencer.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF94A3B8)),
                     ),
-                    title: Text("Traction - Gamme TEXTILE_BATCH_04", style: TextStyle(color: Colors.white)),
-                    subtitle: Text("Norme ISO 527 • 5 échantillon(s) • Conformité : CONFORME", style: TextStyle(color: Colors.grey)),
-                    trailing: Text("Aujourd'hui, 14:32", style: TextStyle(color: Colors.grey, fontSize: 12)),
                   ),
-                  Divider(height: 1, color: Color(0xFF334155)),
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Color(0xFFFEE2E2),
-                      child: Icon(Icons.error_outline, color: Colors.red),
-                    ),
-                    title: Text("Traction - Gamme COMPOSITE_C_12", style: TextStyle(color: Colors.white)),
-                    subtitle: Text("Norme ISO 527 • 3 échantillon(s) • Conformité : NON CONFORME", style: TextStyle(color: Colors.grey)),
-                    trailing: Text("Hier, 09:15", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  ),
-                ],
+                ),
+              )
+            else
+              Card(
+                elevation: 0,
+                color: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF334155)),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: history.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFF334155)),
+                  itemBuilder: (context, index) {
+                    final lot = history[index];
+                    final isSelected = _selectedLots.contains(lot);
+
+                    IconData statusIcon = Icons.check_circle_outline;
+                    Color statusColor = Colors.green;
+                    if (lot.statut == "non_conforme") {
+                      statusIcon = Icons.error_outline;
+                      statusColor = Colors.red;
+                    } else if (lot.statut == "non_evalue") {
+                      statusIcon = Icons.help_outline;
+                      statusColor = Colors.grey;
+                    }
+
+                    return CheckboxListTile(
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _selectedLots.add(lot);
+                          } else {
+                            _selectedLots.remove(lot);
+                          }
+                        });
+                      },
+                      activeColor: Colors.blueAccent,
+                      checkColor: Colors.white,
+                      title: Text(
+                        "Traction - Lot ${lot.materiauNom}",
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        "Norme ${lot.normeCode} • ${lot.resultatsEchantillons.length} échantillon(s) • Conformité : ${lot.statut.toUpperCase()}",
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      secondary: CircleAvatar(
+                        backgroundColor: statusColor.withOpacity(0.15),
+                        child: Icon(statusIcon, color: statusColor),
+                      ),
+                      controlAffinity: ListTileControlAffinity.trailing,
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),

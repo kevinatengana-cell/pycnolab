@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/python_engine_service.dart';
+import '../services/history_service.dart';
 import '../models/resultat_gamme.dart';
 import 'resultats_screen.dart';
 
@@ -71,6 +72,10 @@ class _ImportScreenState extends State<ImportScreen> {
           // Tentative de décodage si c'est un JSON brut
           donnees = Map<String, dynamic>.from(resultatsJson as dynamic);
         }
+
+        // Ajouter le résultat à HistoryService
+        final ResultatGamme resultatGamme = ResultatGamme.fromJson(donnees);
+        HistoryService.instance.add(resultatGamme);
 
         if (mounted) {
           Navigator.push(

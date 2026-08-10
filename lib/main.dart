@@ -6,7 +6,7 @@ import 'services/backend_launcher_service.dart';
 
 // TEMPORAIRE : passer à false une fois le pont confirmé, pour revenir
 // au flux normal (HomeScreen directement).
-const bool _modeTestPont = true;
+const bool _modeTestPont = false;
 
 BackendLauncherService? backendLauncher;
 

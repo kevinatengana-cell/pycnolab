@@ -20,7 +20,17 @@ from moteur_python.modeles.models import (
     PointCourbe,
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="PycnoLab Engine API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class MateriauRequest(BaseModel):
