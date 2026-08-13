@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'screens/compare_screen.dart';
 import 'screens/test_pont_screen.dart'; // TEMPORAIRE - preuve du pont Flutter-Python
 import 'services/backend_launcher_service.dart';
+import 'services/history_service.dart';
 
 // TEMPORAIRE : passer à false une fois le pont confirmé, pour revenir
 // au flux normal (HomeScreen directement).
@@ -53,7 +55,9 @@ class _PycnoLabAppState extends State<PycnoLabApp> {
         scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate-900
         cardColor: const Color(0xFF1E293B), // Slate-800
       ),
-      home: const _EcranDemarrage(),
+      home: _modeTestPont
+          ? const TestPontScreen()
+          : const _EcranDemarrage(),
     );
   }
 }
@@ -100,7 +104,7 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => _modeTestPont ? const TestPontScreen() : const HomeScreen(),
+            builder: (_) => const HomeScreen(),
           ),
         );
       }
