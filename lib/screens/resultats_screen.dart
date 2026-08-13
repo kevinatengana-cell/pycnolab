@@ -245,9 +245,15 @@ class _ResultatsScreenState extends State<ResultatsScreen> with SingleTickerProv
               }
               cells.add(DataCell(Text(_parseDouble(ech['force_rupture_newton']).toStringAsFixed(2), style: const TextStyle(color: Colors.white))));
               cells.add(DataCell(Text(_parseDouble(ech['contrainte_rupture_mpa']).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3B82F6)))));
-              if (ech['module_young_mpa'] != null) cells.add(DataCell(Text(_parseDouble(ech['module_young_mpa']).toStringAsFixed(2), style: const TextStyle(color: Colors.white))));
-              if (ech['energie_rupture_joules'] != null) cells.add(DataCell(Text(_parseDouble(ech['energie_rupture_joules']).toStringAsFixed(2), style: const TextStyle(color: Colors.white))));
-              if (ech['limite_elastique_mpa'] != null) cells.add(DataCell(Text(_parseDouble(ech['limite_elastique_mpa']).toStringAsFixed(2), style: const TextStyle(color: Colors.white))));
+              if (firstEch['module_young_mpa'] != null) {
+                cells.add(DataCell(Text(ech['module_young_mpa'] != null ? _parseDouble(ech['module_young_mpa']).toStringAsFixed(2) : "-", style: const TextStyle(color: Colors.white))));
+              }
+              if (firstEch['energie_rupture_joules'] != null) {
+                cells.add(DataCell(Text(ech['energie_rupture_joules'] != null ? _parseDouble(ech['energie_rupture_joules']).toStringAsFixed(2) : "-", style: const TextStyle(color: Colors.white))));
+              }
+              if (firstEch['limite_elastique_mpa'] != null) {
+                cells.add(DataCell(Text(ech['limite_elastique_mpa'] != null ? _parseDouble(ech['limite_elastique_mpa']).toStringAsFixed(2) : "-", style: const TextStyle(color: Colors.white))));
+              }
               return DataRow(cells: cells);
             }).toList(),
           ),
