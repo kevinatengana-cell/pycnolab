@@ -33,6 +33,9 @@ class ResultatGamme {
   final double ecartTypeMpa;
   final double? moduleYoungMoyenMpa;
   final String statut; // "conforme" | "non_conforme" | "non_evalue"
+  final double? deformationMoyennePourcent;
+  final double? ecartTypeDeformationPourcent;
+  final double? ecartTypeModuleYoungMpa;
 
   ResultatGamme({
     required this.materiauNom,
@@ -43,6 +46,9 @@ class ResultatGamme {
     required this.ecartTypeMpa,
     this.moduleYoungMoyenMpa,
     required this.statut,
+    this.deformationMoyennePourcent,
+    this.ecartTypeDeformationPourcent,
+    this.ecartTypeModuleYoungMpa,
   });
 
   factory ResultatGamme.fromJson(Map<String, dynamic> json) {
@@ -60,6 +66,9 @@ class ResultatGamme {
       ecartTypeMpa: (json["ecart_type_mpa"] as num?)?.toDouble() ?? 0.0,
       moduleYoungMoyenMpa: (json["module_young_moyen_mpa"] as num?)?.toDouble(),
       statut: (json["statut"] as String?) ?? 'non_evalue',
+      deformationMoyennePourcent: (json["deformation_moyenne_pourcent"] as num?)?.toDouble(),
+      ecartTypeDeformationPourcent: (json["ecart_type_deformation_pourcent"] as num?)?.toDouble(),
+      ecartTypeModuleYoungMpa: (json["ecart_type_module_young_mpa"] as num?)?.toDouble(),
     );
   }
 }
