@@ -3,7 +3,66 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-app = FastAPI(title="Moteur de Calcul Essais de Traction")
+from ..import_excel.reader import lire_gamme_complete
+from moteur_python.calculs.traction import TractionCalculateur
+from moteur_python.modeles.models import (
+    ConditionsAmbiantes,
+    Echantillon,
+    FamilleMateriau,
+    Gamme,
+    Materiau,
+    Norme,
+    PointCourbe,
+)
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="PycnoLab Engine API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class MateriauRequest(BaseModel):
+    nom_usage: str
+    code_interne: str
+    famille: str = "autre"
+
+
+class NormeRequest(BaseModel):
+    code: str
+    designation: str
+    seuil_resistance_min_mpa: Optional[float] = None
+    seuil_allongement_min_pourcent: Optional[float] = None
+
+
+class ConditionsRequest(BaseModel):
+    temperature_celsius: Optional[float] = None
+    humidite_pourcent: Optional[float] = None
+    duree_conditionnement_heures: Optional[float] = None
+
+
+class PointCourbeRequest(BaseModel):
+    force_newton: float
+    deplacement_mm: float
+
+
+class EchantillonRequest(BaseModel):
+    identifiant: str
+    longueur_initiale_mm: float
+    largeur_mm: Optional[float] = None
+    epaisseur_mm: Optional[float] = None
+    diametres_mm: list[float] = []
+    force_rupture_newton: Optional[float] = None
+    deplacement_rupture_mm: Optional[float] = None
+    points_courbe: list[PointCourbeRequest] = []
+    parametres_extra: dict[str, float] = {}
+
 
 class GammeRequest(BaseModel):
     chemin_fichier: Optional[str] = None
