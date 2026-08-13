@@ -1,3 +1,4 @@
+// lib/screens/resultats_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -19,7 +20,9 @@ class _ResultatsScreenState extends State<ResultatsScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _echantillons = widget.donnees?['echantillons'] as List<dynamic>? ?? [];
+    
+    // CORRECTION ICI : Accepte 'echantillons' OU 'resultats_echantillons'
+    _echantillons = (widget.donnees?['echantillons'] ?? widget.donnees?['resultats_echantillons']) as List<dynamic>? ?? [];
     _stats = widget.donnees?['statistiques'] as Map<String, dynamic>? ?? {};
   }
 
@@ -306,7 +309,6 @@ class _ResultatsScreenState extends State<ResultatsScreen> with SingleTickerProv
       if (f > maxY) maxY = f;
     }
 
-    // Si on a moins de 2 points, la courbe n'a pas de sens (c'est juste la rupture)
     if (spots.length < 2) return const Center(child: Text("Points de courbe insuffisants.", style: TextStyle(color: Color(0xFF94A3B8))));
 
     return SizedBox(

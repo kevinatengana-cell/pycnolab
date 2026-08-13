@@ -65,11 +65,6 @@ class Echantillon:
     epaisseur_mm: Optional[float] = None
 
     # Section circulaire (métaux, certains composites, fibres naturelles).
-    # Une liste plutôt qu'une valeur unique : certains essais (fibres
-    # naturelles notamment) demandent plusieurs mesures de diamètre sur le
-    # même échantillon (souvent 3, le diamètre variant le long de la
-    # fibre), dont la moyenne est utilisée pour la section. Un seul
-    # diamètre reste une liste à un élément - pas de cas particulier.
     diametres_mm: list[float] = field(default_factory=list)
 
     # Données de rupture (toujours disponibles, même sans courbe complète)
@@ -82,9 +77,6 @@ class Echantillon:
     def section_mm2(self) -> float:
         """Calcule la section selon les dimensions renseignées."""
         if self.diametres_mm:
-            # Import local pour éviter tout risque de dépendance circulaire
-            # entre modeles/ et calculs/ (calculs dépend de modeles, pas
-            # l'inverse, en temps normal).
             from moteur_python.calculs.outils.geometrie import (
                 diametre_moyen,
                 section_circulaire,
@@ -102,12 +94,7 @@ class Echantillon:
 
 @dataclass
 class Norme:
-    """
-    Une norme/protocole. Le seuil de conformité est un paramètre, pas du
-    code en dur : c'est ce qui permet le bouton 'ajouter un essai/protocole'
-    du cahier des charges sans toucher au moteur de calcul.
-    """
-    code: str  # ex: "ISO 527-1", "ASTM D638", "ISO 13934-1"
+    code: str
     designation: str
     seuil_resistance_min_mpa: Optional[float] = None
     seuil_allongement_min_pourcent: Optional[float] = None
@@ -129,6 +116,7 @@ class ResultatEchantillon:
     contrainte_rupture_mpa: float
     deformation_rupture_pourcent: float
     module_young_mpa: Optional[float]  # None si pas de courbe fournie
+    force_max_newton: Optional[float] = None  # AJOUT : Force maximale en Newton
     energie_rupture_joules: Optional[float] = None
     limite_elastique_mpa: Optional[float] = None
 
