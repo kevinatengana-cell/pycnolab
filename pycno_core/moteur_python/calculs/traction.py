@@ -16,7 +16,6 @@ from moteur_python.calculs.outils.regression import module_depuis_courbe
 from moteur_python.calculs.outils.energie import energie_absorbee
 from moteur_python.calculs.outils.elasticite import limite_elastique_offset
 from moteur_python.calculs.outils.statistiques import moyenne_et_ecart_type
-from moteur_python.calculs.outils.extremes import valeur_maximale
 from moteur_python.modeles.models import (
     Echantillon,
     Gamme,
@@ -31,24 +30,14 @@ class TractionCalculateur(MoteurCalcul):
     def _calculer_echantillon(self, ech: Echantillon, calculs_demandes: list[str]) -> ResultatEchantillon:
         section = ech.section_mm2()
 
-        if ech.force_rupture_newton is None and not ech.points_courbe:
+        if ech.force_rupture_newton is None or ech.deplacement_rupture_mm is None:
             raise ValueError(
-                f"Échantillon {ech.identifiant} : force à rupture ou points de courbe obligatoires."
+                f"Échantillon {ech.identifiant} : force et déplacement à "
+                "rupture obligatoires."
             )
 
-        # Extraction de la force maximale (depuis les points de courbe ou la force de rupture)
-        forces_courbe = [p.force_newton for p in ech.points_courbe]
-        if forces_courbe:
-            force_max = valeur_maximale(forces_courbe)
-        else:
-            force_max = ech.force_rupture_newton
-
-        force_rupture = ech.force_rupture_newton if ech.force_rupture_newton is not None else force_max
-        contrainte_rupture = force_rupture / section
-
-        deformation_rupture = 0.0
-        if ech.deplacement_rupture_mm is not None:
-            deformation_rupture = (ech.deplacement_rupture_mm / ech.longueur_initiale_mm) * 100
+        contrainte_rupture = ech.force_rupture_newton / section
+        deformation_rupture = (ech.deplacement_rupture_mm / ech.longueur_initiale_mm) * 100
 
         module_young = module_depuis_courbe(
             points_courbe=ech.points_courbe,
@@ -76,7 +65,6 @@ class TractionCalculateur(MoteurCalcul):
             contrainte_rupture_mpa=contrainte_rupture,
             deformation_rupture_pourcent=deformation_rupture,
             module_young_mpa=module_young,
-            force_max_newton=force_max,  # Ingestion de la force max dans le résultat
             energie_rupture_joules=energie_rupture,
             limite_elastique_mpa=limite_elastique,
         )
