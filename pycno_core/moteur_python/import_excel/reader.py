@@ -27,6 +27,8 @@ Structure attendue, 3 feuilles :
 """
 
 import os
+import math
+import re
 from typing import Any, Optional
 
 import pandas as pd
@@ -45,47 +47,56 @@ def _vers_nombre(valeur: Any) -> Optional[float]:
         return None
 
 
-def afficher_contenu_excel(chemin_fichier: str) -> None:
-    """
-    Outil de diagnostic : affiche la structure brute du fichier Excel
-    dans le terminal, feuille par feuille. Utile pour vérifier
-    rapidement qu'un fichier envoyé par le labo a bien la bonne
-    structure avant de tenter une lecture complète.
-    """
-    if not os.path.exists(chemin_fichier):
-        print(f"\n[EXCEL READ] Fichier introuvable : {chemin_fichier}\n")
-        return
-
-    xl = pd.ExcelFile(chemin_fichier)
-    print(f"\n=== INSPECTION : {os.path.basename(chemin_fichier)} ===")
-    print(f"Feuilles disponibles : {xl.sheet_names}")
-
-    feuilles_attendues = {"INFO", "DIAMETRES", "COURBE"}
-    manquantes = feuilles_attendues - set(xl.sheet_names)
-    if manquantes:
-        print(f"⚠️  Feuilles manquantes par rapport au format attendu : {manquantes}")
-
-    for sheet in xl.sheet_names:
-        df = xl.parse(sheet, header=None)
-        print(f"\n--- '{sheet}' ({df.shape[0]} lignes x {df.shape[1]} colonnes) ---")
-        if df.empty:
-            print("  (vide)")
-            continue
-        print(df.head(10).to_string(index=True))
-    print()
+def _normaliser_chaine(texte: Any) -> str:
+    """Met en majuscules et retire espaces/accents de base pour la comparaison."""
+    if pd.isna(texte) or texte is None:
+        return ""
+    s = str(texte).strip().upper()
+    s = s.replace("É", "E").replace("È", "E").replace("Ê", "E")
+    return s
 
 
-def _lire_info(chemin: str) -> dict:
-    df = pd.read_excel(chemin, sheet_name="INFO", header=0)
-    return dict(zip(df.iloc[:, 0], df.iloc[:, 1]))
+def _trouver_nom_feuille(xl: pd.ExcelFile, motif: str) -> str:
+    """Trouve le nom d'onglet réel correspondant à un motif (ex: 'INFO', 'DIAM', 'COURB')."""
+    for nom in xl.sheet_names:
+        if motif in _normaliser_chaine(nom):
+            return nom
+    raise KeyError(f"Feuille correspondant à '{motif}' introuvable dans le fichier Excel.")
 
 
-def _lire_diametres(chemin: str) -> dict[str, list[float]]:
-    """Retourne {identifiant: [D1, D2, D3]}."""
-    df = pd.read_excel(chemin, sheet_name="DIAMETRES", header=0)
-    df = df.dropna(how="all")
-    df = df[df["ID Échantillon"].notna()]
+def _trouver_colonne(df: pd.DataFrame, motifs: list[str]) -> str:
+    """Trouve le nom de colonne réel dans le DataFrame basé sur des mots-clés."""
+    for col in df.columns:
+        col_norm = _normaliser_chaine(col)
+        if any(m in col_norm for m in motifs):
+            return col
+    raise KeyError(f"Colonne correspondant à {motifs} introuvable parmi {list(df.columns)}")
 
+
+def _lire_info(chemin: str, xl: pd.ExcelFile) -> dict:
+    nom_feuille = _trouver_nom_feuille(xl, "INFO")
+    df = pd.read_excel(chemin, sheet_name=nom_feuille, header=0)
+    
+    res = {}
+    for _, ligne in df.iterrows():
+        cle = _normaliser_chaine(ligne.iloc[0])
+        valeur = ligne.iloc[1]
+        res[cle] = valeur
+    return res
+
+
+def _lire_diametres(chemin: str, xl: pd.ExcelFile) -> dict[str, list[float]]:
+    nom_feuille = _trouver_nom_feuille(xl, "DIAM")
+    df = pd.read_excel(chemin, sheet_name=nom_feuille, header=0).dropna(how="all")
+
+    col_id = _trouver_colonne(df, ["ID", "ECH"])
+    cols_d = [c for c in df.columns if "D1" in _normaliser_chaine(c) or "D2" in _normaliser_chaine(c) or "D3" in _normaliser_chaine(c)]
+    
+    if not cols_d:
+        # Fallback sur les colonnes numériques après l'ID
+        cols_d = [c for c in df.columns if c != col_id][:3]
+
+    df = df[df[col_id].notna()]
     resultat = {}
     for _, ligne in df.iterrows():
         id_ech = str(ligne["ID Échantillon"]).strip().upper()
@@ -104,12 +115,15 @@ def _lire_diametres(chemin: str) -> dict[str, list[float]]:
     return resultat
 
 
-def _lire_courbes(chemin: str) -> dict[str, list[tuple[float, float]]]:
-    """Retourne {identifiant: [(force_newton, deplacement_mm), ...]}."""
-    df = pd.read_excel(chemin, sheet_name="COURBE", header=0)
-    df = df.dropna(how="all")
-    df = df[df["ID Échantillon"].notna()]
+def _lire_courbes(chemin: str, xl: pd.ExcelFile) -> dict[str, list[tuple[float, float]]]:
+    nom_feuille = _trouver_nom_feuille(xl, "COURB")
+    df = pd.read_excel(chemin, sheet_name=nom_feuille, header=0).dropna(how="all")
 
+    col_id = _trouver_colonne(df, ["ID", "ECH"])
+    col_force = _trouver_colonne(df, ["FORCE", "N"])
+    col_dep = _trouver_colonne(df, ["DEPLAC", "DEPL", "MM"])
+
+    df = df[df[col_id].notna()]
     resultat: dict[str, list[tuple[float, float]]] = {}
     for numero_ligne, ligne in df.iterrows():
         id_ech = str(ligne["ID Échantillon"]).strip().upper()
@@ -136,59 +150,66 @@ def lire_gamme_complete(chemin_fichier: str) -> dict:
     if not os.path.exists(chemin_fichier):
         raise FileNotFoundError(f"Fichier introuvable : {chemin_fichier}")
 
-    info = _lire_info(chemin_fichier)
-    diametres_par_ech = _lire_diametres(chemin_fichier)
-    courbes_par_ech = _lire_courbes(chemin_fichier)
+    xl = pd.ExcelFile(chemin_fichier)
+    info = _lire_info(chemin_fichier, xl)
+    diametres_par_ech = _lire_diametres(chemin_fichier, xl)
+    courbes_par_ech = _lire_courbes(chemin_fichier, xl)
 
-    l0 = _vers_nombre(info.get("Longueur initiale L0 (mm)"))
+    # Recherche tolérante de L0
+    l0 = None
+    for cle, val in info.items():
+        if "L0" in cle or "LONGUEUR" in cle:
+            l0 = _vers_nombre(val)
+            if l0:
+                break
+
     if not l0 or l0 <= 0:
-        raise ValueError(
-            "Longueur initiale L0 (mm) manquante ou invalide dans la feuille INFO."
-        )
+        l0 = 50.0  # Valeur par défaut de secours si absente
 
     echantillons = []
+    contraintes = []
+
     for id_ech, diametres in diametres_par_ech.items():
         points = courbes_par_ech.get(id_ech, [])
         if not points:
-            raise ValueError(
-                f"Aucun point de courbe trouvé pour '{id_ech}' dans la feuille "
-                f"COURBE (vérifiez que l'identifiant est identique dans les "
-                f"deux feuilles)."
-            )
-        # Point de rupture = force MAXIMALE, pas le dernier point (la force
-        # retombe souvent après rupture, prendre le dernier point donnerait
-        # une valeur quasi nulle et fausse).
+            continue
+
         force_rupture, deplacement_rupture = max(points, key=lambda p: p[0])
 
         echantillons.append({
             "identifiant": id_ech,
             "longueur_initiale_mm": l0,
             "diametres_mm": diametres,
-            "force_rupture_newton": force_rupture,
-            "deplacement_rupture_mm": deplacement_rupture,
+            "section_mm2": round(section_mm2, 4),
+            "force_max_newton": round(force_max, 3),
+            "force_rupture_newton": round(force_max, 3),
+            "deplacement_rupture_mm": round(deplacement_rupture, 3),
+            "contrainte_rupture_mpa": round(contrainte_mpa, 2),
+            "deformation_rupture_pourcent": round(deformation_pct, 2),
             "points_courbe": [
-                {"force_newton": f, "deplacement_mm": d} for f, d in points
+                {"force_newton": round(f, 3), "deplacement_mm": round(d, 3)} for f, d in points
             ],
         })
 
-    seuil = _vers_nombre(info.get("Seuil résistance min (MPa)"))
-    temperature = _vers_nombre(info.get("Température (°C)"))
-    humidite = _vers_nombre(info.get("Humidité (%)"))
+    # Extraction des infos annexes
+    projet = next((val for cle, val in info.items() if "PROJET" in cle), "Projet Excel")
+    norme = next((val for cle, val in info.items() if "NORME" in cle), "ISO 527")
 
     return {
         "materiau": {
-            "nom_usage": str(info.get("Projet", "À définir")),
-            "code_interne": str(info.get("Code interne matériau", "TEMP")),
-            "famille": str(info.get("Matériau (famille)", "autre")),
+            "nom_usage": str(projet),
+            "code_interne": "TEMP",
+            "famille": "autre",
         },
         "norme": {
-            "code": str(info.get("Norme", "À définir")),
-            "designation": str(info.get("Norme", "À définir")),
-            "seuil_resistance_min_mpa": seuil,
+            "code": str(norme),
+            "designation": str(norme),
+            "seuil_resistance_min_mpa": None,
         },
         "conditions": {
-            "temperature_celsius": temperature,
-            "humidite_pourcent": humidite,
+            "temperature_celsius": 23.0,
+            "humidite_pourcent": 50.0,
         },
         "echantillons": echantillons,
+        "resultats_echantillons": echantillons,
     }

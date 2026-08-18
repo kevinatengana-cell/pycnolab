@@ -1,0 +1,74 @@
+{
+  "protocol_id": "nf_en_12390_3_draft",
+  "metadata": {
+    "norme": "NF EN 12390-3",
+    "norme_confidence": "haute",
+    "essai": "L'approche mixte combine la rapidité du traitement automatique par script et la rigueur du contrôle humain métier. Elle",
+    "materiau_detecte": null,
+    "titre": "L'approche mixte combine la rapidité du traitement automatique par script et la rigueur du contrôle humain métier. Elle",
+    "version": "0.1-draft",
+    "created_at": "2026-08-17T20:05:00.415250+00:00",
+    "source_pdf": "Procedure_Creation_Norme_PycnoLab.pdf"
+  },
+  "inputs_schema": [
+    {
+      "key": "parsing_automatique_des_tableaux_pdf",
+      "label": "Parsing automatique des tableaux PDF",
+      "type": "decimal",
+      "unit": null,
+      "required": true,
+      "symbol": null,
+      "extraction": {
+        "source": "table_detectee",
+        "confidence": "basse"
+      }
+    },
+    {
+      "key": "verification_de_la_syntaxe_json",
+      "label": "Vérification de la syntaxe JSON",
+      "type": "decimal",
+      "unit": null,
+      "required": true,
+      "symbol": null,
+      "extraction": {
+        "source": "table_detectee",
+        "confidence": "basse"
+      }
+    },
+    {
+      "key": "unit",
+      "label": "\"unit\": \"\",",
+      "type": "decimal",
+      "unit": "MPa",
+      "required": true,
+      "symbol": null,
+      "extraction": {
+        "source": "reconstruction_xy",
+        "confidence": "basse"
+      }
+    },
+    {
+      "key": "raw_detected_formula_f_b",
+      "label": "\"raw_detected_formula\": \"F / (b * )\",",
+      "type": "decimal",
+      "unit": "h",
+      "required": true,
+      "symbol": null,
+      "extraction": {
+        "source": "reconstruction_xy",
+        "confidence": "haute"
+      }
+    }
+  ],
+  "calculations": [],
+  "validation_rules": {},
+  "extraction_summary": {
+    "total_champs_extraits": 4,
+    "total_formules_extraites": 0,
+    "confiance_haute": 1,
+    "confiance_moyenne": 0,
+    "confiance_basse": 3,
+    "avertissements": [],
+    "note": "Ce fichier est un brouillon généré automatiquement (sans LLM, 100% local). Les champs à confiance 'moyenne' ou 'basse' doivent être vérifiés par l'opérateur du laboratoire dans l'éditeur no-code avant validation du protocole."
+  }
+}
