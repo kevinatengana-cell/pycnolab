@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'config_essai_screen.dart';
-import 'compare_screen.dart';
-import '../services/history_service.dart';
+import 'package:path/path.dart' as p;
+
 import '../models/resultat_gamme.dart';
+import '../services/history_service.dart';
+import 'compare_screen.dart';
+import 'config_essai_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,6 +16,45 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Set<ResultatGamme> _selectedLots = {};
+  
+  List<FileSystemEntity> _protocolesLocaux = [];
+  bool _chargementProtocoles = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _chargerProtocolesLocaux();
+  }
+
+  /// Scanne le dossier /protocoles à côté de l'exécutable
+  Future<void> _chargerProtocolesLocaux() async {
+    if (!mounted) return;
+    setState(() => _chargementProtocoles = true);
+    
+    try {
+      final exeDir = File(Platform.resolvedExecutable).parent;
+      final protocoleDir = Directory(p.join(exeDir.path, 'protocoles'));
+
+      if (await protocoleDir.exists()) {
+        final fichiers = protocoleDir
+            .listSync()
+            .where((entity) => entity.path.endsWith('.json'))
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _protocolesLocaux = fichiers;
+          });
+        }
+      } else {
+        await protocoleDir.create(recursive: true);
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la lecture des protocoles: $e");
+    } finally {
+      if (mounted) setState(() => _chargementProtocoles = false);
+    }
+  }
 
   @override
   void initState() {
@@ -85,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final history = HistoryService.instance.history;
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Slate-900 (Dark Mode)
+      backgroundColor: const Color(0xFF0F172A), // Slate-900
       appBar: AppBar(
         title: const Row(
           children: [
@@ -97,15 +139,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF0F172A), // Slate-900
+        backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // Navigation vers les paramètres si besoin
-            },
+            icon: const Icon(Icons.refresh),
+            tooltip: "Rafraîchir les protocoles",
+            onPressed: _chargerProtocolesLocaux,
           ),
           const SizedBox(width: 12),
         ],
@@ -115,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Message de bienvenue & statut
             const Text(
               "Tableau de bord du Laboratoire",
               style: TextStyle(
@@ -131,9 +171,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 32),
 
-            // 2. Section "Lancer un Essai" (Cartes d'action principales)
+            // 1. Modules d'essais
             const Text(
-              "ESSAIS MÉCANIQUES",
+              "MODULES & PROTOCOLES",
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -146,16 +186,15 @@ class _HomeScreenState extends State<HomeScreen> {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              childAspectRatio: 1.6,
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.4,
               children: [
-                // Carte 1 : Essai de Traction (Actif)
                 _buildActionCard(
                   context,
                   title: "Essai de Traction",
-                  subtitle: "ISO 527 / ASTM D638\nImport Excel & Calculs auto",
+                  subtitle: "ISO 527 / ASTM D638\nImport Excel standard",
                   icon: Icons.unfold_more_rounded,
                   color: Colors.blue,
                   badgeText: "Prêt",
@@ -163,59 +202,138 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () async {
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ConfigEssaiScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const ConfigEssaiScreen(typeEssai: "traction"),
+                      ),
                     );
                     setState(() {});
                   },
                 ),
-
-                // Carte 2 : Créateur de Protocole (No-Code V2)
                 _buildActionCard(
                   context,
-                  title: "Nouveau Protocole (No-Code)",
-                  subtitle: "Configurer des formules & seuils personnalisés",
+                  title: "Éditeur No-Code",
+                  subtitle: "Créer / Éditer un protocole personnalisée",
                   icon: Icons.post_add_rounded,
                   color: Colors.indigo,
-                  badgeText: "Laborantin",
+                  badgeText: "Conception",
                   badgeColor: Colors.indigo.shade300,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Module de création No-Code en cours d'intégration..."),
-                      ),
-                    );
+                  onTap: () async {
+                    await Navigator.pushNamed(context, '/editeur-protocole');
+                    _chargerProtocolesLocaux(); // Recharge à la fermeture
                   },
                 ),
-
-                // Carte 3 : Flexion 3 Points (Futur plugin)
                 _buildActionCard(
                   context,
-                  title: "Flexion 3 Points",
-                  subtitle: "ISO 178 / ASTM D790\nCalcul de contrainte & flèche",
-                  icon: Icons.architecture,
-                  color: Colors.amber.shade800,
-                  badgeText: "Prochainement",
-                  badgeColor: Colors.grey,
-                  onTap: null, // Inactif pour l'instant
-                ),
-
-                // Carte 4 : Compression (Futur plugin)
-                _buildActionCard(
-                  context,
-                  title: "Essai de Compression",
-                  subtitle: "ISO 604 / ASTM D695\nComportement en charge",
-                  icon: Icons.compress_rounded,
-                  color: Colors.teal,
-                  badgeText: "Prochainement",
-                  badgeColor: Colors.grey,
-                  onTap: null,
+                  title: "Moteur d'Exécution",
+                  subtitle: "Exécuter un protocole JSON sur des mesures",
+                  icon: Icons.play_circle_fill_rounded,
+                  color: Colors.green,
+                  badgeText: "Exécution",
+                  badgeColor: Colors.green.shade300,
+                  onTap: () async {
+                    await Navigator.pushNamed(context, '/runner-protocole');
+                    _chargerProtocolesLocaux();
+                  },
                 ),
               ],
             ),
 
             const SizedBox(height: 40),
 
-            // 3. Section Historique / Activité récente (dynamique)
+            // 2. Section Fichiers Protocoles Enregistrés
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "PROTOCOLES LOCAUX ENREGISTRÉS (.JSON)",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                Text(
+                  "${_protocolesLocaux.length} fichier(s)",
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            if (_chargementProtocoles)
+              const Center(child: CircularProgressIndicator())
+            else if (_protocolesLocaux.isEmpty)
+              Card(
+                color: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF334155)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text(
+                      "Aucun protocole personnalisé trouvé dans /protocoles.\nUtilisez l'Éditeur No-Code pour en enregistrer un.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF94A3B8)),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Card(
+                elevation: 0,
+                color: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF334155)),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _protocolesLocaux.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFF334155)),
+                  itemBuilder: (context, index) {
+                    final file = _protocolesLocaux[index];
+                    final fileName = p.basename(file.path);
+
+                    return ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFF0F172A),
+                        child: Icon(Icons.code_rounded, color: Colors.blueAccent, size: 20),
+                      ),
+                      title: Text(
+                        fileName,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                      ),
+                      subtitle: Text(
+                        file.path,
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: ElevatedButton.icon(
+                        icon: const Icon(Icons.play_arrow, size: 16),
+                        label: const Text("Exécuter"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                          foregroundColor: Colors.blueAccent,
+                          elevation: 0,
+                        ),
+                        onPressed: () async {
+                          await Navigator.pushNamed(context, '/runner-protocole');
+                          _chargerProtocolesLocaux();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+            const SizedBox(height: 40),
+
+            // 3. Section Historique
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -240,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       : null,
                   icon: const Icon(Icons.compare_arrows),
-                  label: Text("Comparer les lots (${_selectedLots.length})"),
+                  label: Text("Comparer (${_selectedLots.length})"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -253,13 +371,17 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
 
             if (history.isEmpty)
-              const Card(
-                color: Color(0xFF1E293B),
-                child: Padding(
+              Card(
+                color: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF334155)),
+                ),
+                child: const Padding(
                   padding: EdgeInsets.all(24.0),
                   child: Center(
                     child: Text(
-                      "Aucun lot importé pour le moment.\nConfigurez un essai et importez un fichier Excel pour commencer.",
+                      "Aucun lot exécuté dans la session actuelle.",
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF94A3B8)),
                     ),
@@ -307,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       activeColor: Colors.blueAccent,
                       checkColor: Colors.white,
                       title: Text(
-                        "Traction - Lot ${lot.materiauNom}",
+                        "Lot ${lot.materiauNom}",
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
@@ -354,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -363,15 +485,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: isEnabled ? color.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: isEnabled ? color : Colors.grey, size: 28),
+                    child: Icon(icon, color: isEnabled ? color : Colors.grey, size: 24),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: badgeColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
@@ -379,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       badgeText,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: badgeColor,
                       ),
@@ -393,18 +515,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: isEnabled ? Colors.white : Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: isEnabled ? const Color(0xFF94A3B8) : Colors.grey.shade700,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

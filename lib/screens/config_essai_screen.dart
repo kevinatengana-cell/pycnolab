@@ -4,14 +4,16 @@ import '../models/gamme_request.dart';
 import 'import_screen.dart';
 
 class ConfigEssaiScreen extends StatefulWidget {
-  const ConfigEssaiScreen({super.key});
+  final String typeEssai;
+
+  const ConfigEssaiScreen({super.key, this.typeEssai = "traction"});
 
   @override
   State<ConfigEssaiScreen> createState() => _ConfigEssaiScreenState();
 }
 
 class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
-  String _selectedNorm = "ISO 527"; // Par défaut
+  late String _selectedNorm;
 
   // Liste de tous les calculs possibles
   final List<Map<String, dynamic>> _calculsDisponibles = [
@@ -25,16 +27,31 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
   // État des calculs : true s'ils sont cochés
   final Map<String, bool> _calculsCoches = {};
 
-  // Définition des normes et de leurs calculs obligatoires
-  final Map<String, List<String>> _normesConfig = {
-    "ISO 527": ["contrainte_rupture", "deformation_rupture", "module_young"],
-    "ASTM D638": ["contrainte_rupture", "deformation_rupture", "module_young"],
-    "Mode Libre": [], // Aucun obligatoire
+  // Normes disponibles PAR TYPE D'ESSAI - chaque essai a ses propres
+  // normes de référence, pas les mêmes listes partout.
+  static const Map<String, Map<String, List<String>>> _normesParEssai = {
+    "traction": {
+      "ISO 527": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "ASTM D638": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "Mode Libre": [],
+    },
+    "compression": {
+      "ISO 604": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "ASTM D695": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "Mode Libre": [],
+    },
   };
+
+  Map<String, List<String>> get _normesConfig =>
+      _normesParEssai[widget.typeEssai] ?? _normesParEssai["traction"]!;
+
+  String get _titreEssai =>
+      widget.typeEssai == "compression" ? "l'Essai de Compression" : "l'Essai de Traction";
 
   @override
   void initState() {
     super.initState();
+    _selectedNorm = _normesConfig.keys.first;
     _appliquerNorme(_selectedNorm);
   }
 
@@ -79,7 +96,7 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ImportScreen(configInitiale: configInitiale),
+        builder: (context) => ImportScreen(configInitiale: configInitiale, typeEssai: widget.typeEssai),
       ),
     );
   }
@@ -89,7 +106,7 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A), // Slate-900
       appBar: AppBar(
-        title: const Text('Configuration de l\'Essai de Traction'),
+        title: Text('Configuration de $_titreEssai'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,

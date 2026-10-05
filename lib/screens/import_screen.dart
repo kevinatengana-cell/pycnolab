@@ -4,13 +4,13 @@ import '../services/python_engine_service.dart';
 import '../services/history_service.dart';
 import '../models/resultat_gamme.dart';
 import 'resultats_screen.dart';
-
 import '../models/gamme_request.dart';
 
 class ImportScreen extends StatefulWidget {
   final GammeRequest? configInitiale;
+  final String typeEssai;
 
-  const ImportScreen({super.key, this.configInitiale});
+  const ImportScreen({super.key, this.configInitiale, this.typeEssai = "traction"});
 
   @override
   State<ImportScreen> createState() => _ImportScreenState();
@@ -24,7 +24,8 @@ class _ImportScreenState extends State<ImportScreen> {
   Future<void> _importerEtCalculerExcel() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['xlsx', 'xls', 'csv'],
+      // Le lecteur Python exige un classeur structure ; un CSV ne peut pas etre importe.
+      allowedExtensions: ['xlsx'],
     );
 
     if (result != null && result.files.single.path != null) {
@@ -37,45 +38,31 @@ class _ImportScreenState extends State<ImportScreen> {
 
       try {
         // Envoi du chemin du fichier au backend Python
-        final dynamic resultatsJson = await _pythonService.calculerDepuisExcel(filePath, widget.configInitiale);
+        final dynamic resultatsJson = await _pythonService.calculerDepuisExcel(
+          filePath,
+          widget.configInitiale,
+          widget.typeEssai,
+        );
 
         setState(() => _isLoading = false);
 
-        // Le service peut renvoyer soit un ResultatGamme, soit un Map déjà prêt.
+        // --- DEBUT DU BLOC CORRIGÉ ---
         Map<String, dynamic> donnees;
         if (resultatsJson is ResultatGamme) {
-          // Conversion explicite vers la forme attendue par ResultatsScreen
-          final echantillons = resultatsJson.resultatsEchantillons
-              .map((e) => {
-                    'identifiant': e.identifiant,
-                    'largeur_mm': null,
-                    'epaisseur_mm': null,
-                    'longueur_initiale_mm': null,
-                    'force_rupture_newton': null,
-                    'deplacement_rupture_mm': null,
-                    'contrainte_rupture_mpa': e.contrainteRuptureMpa,
-                    'allongement_rupture_pourcent': e.deformationRupturePourcent,
-                  })
-              .toList();
-
-          donnees = {
-            'echantillons': echantillons,
-            'statistiques': {
-              'sigma_moyenne': resultatsJson.resistanceMoyenneMpa,
-              'sigma_ecart_type': resultatsJson.ecartTypeMpa,
-              'epsilon_moyen': resultatsJson.moduleYoungMoyenMpa ?? 0.0,
-            }
-          };
+          donnees = resultatsJson.toJson();
         } else if (resultatsJson is Map<String, dynamic>) {
           donnees = resultatsJson;
         } else {
-          // Tentative de décodage si c'est un JSON brut
           donnees = Map<String, dynamic>.from(resultatsJson as dynamic);
         }
 
-        // Ajouter le résultat à HistoryService
-        final ResultatGamme resultatGamme = ResultatGamme.fromJson(donnees);
+        // Ajouter au service d'historique
+        final ResultatGamme resultatGamme = resultatsJson is ResultatGamme 
+            ? resultatsJson 
+            : ResultatGamme.fromJson(donnees);
+            
         HistoryService.instance.add(resultatGamme);
+        // --- FIN DU BLOC CORRIGÉ ---
 
         if (mounted) {
           Navigator.push(
@@ -93,8 +80,6 @@ class _ImportScreenState extends State<ImportScreen> {
   }
 
   void _afficherErreur(String message) {
-    // Reste affiché jusqu'à fermeture manuelle (au lieu de disparaître
-    // après ~4s) - le temps de debug, pour pouvoir lire l'erreur complète.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -114,7 +99,7 @@ class _ImportScreenState extends State<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dark slate
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         title: const Text('PYCNOLAB — Acquisition des Données'),
         elevation: 0,
@@ -129,10 +114,9 @@ class _ImportScreenState extends State<ImportScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Titre & Instructions
-              const Text(
-                "Essai de Traction",
-                style: TextStyle(
+              Text(
+                widget.typeEssai == "compression" ? "Essai de Compression" : "Essai de Traction",
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -147,7 +131,6 @@ class _ImportScreenState extends State<ImportScreen> {
               ),
               const SizedBox(height: 32),
 
-              // 2. Zone d'importation stylisée (Carte)
               Card(
                 elevation: 0,
                 color: const Color(0xFF1E293B),
@@ -184,12 +167,11 @@ class _ImportScreenState extends State<ImportScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        "Formats acceptés : .xlsx, .xls, .csv",
+                        "Format accepte : .xlsx",
                         style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       ),
                       const SizedBox(height: 24),
 
-                      // 3. Bouton principal ou indicateur de chargement
                       _isLoading
                           ? const Column(
                               children: [
@@ -227,16 +209,13 @@ class _ImportScreenState extends State<ImportScreen> {
 
               const SizedBox(height: 24),
 
-              // 4. Note de bas de page (Rappel du gabarit)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.info_outline, size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   TextButton(
-                    onPressed: () {
-                      // Action pour ouvrir ou télécharger un modèle Excel type
-                    },
+                    onPressed: () {},
                     child: const Text(
                       "Télécharger le modèle Excel conforme",
                       style: TextStyle(decoration: TextDecoration.underline),

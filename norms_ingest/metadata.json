@@ -1,0 +1,6 @@
+{
+  "name": "PycnoLab - Ingestion des Normes & Éditeur No-Code",
+  "description": "Plateforme d'ingestion assistée de normes et protocoles d'essais de laboratoire (Extraction IA/Python 80% + Éditeur No-Code Flutter/Web 20%).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

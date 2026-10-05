@@ -19,7 +19,7 @@ class _SaisieScreenState extends State<SaisieScreen> {
     // 1. Déclencher le sélecteur de fichier Windows
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['xlsx', 'xls', 'csv'],
+      allowedExtensions: ['xlsx'],
     );
 
     if (result != null && result.files.single.path != null) {
@@ -42,7 +42,7 @@ class _SaisieScreenState extends State<SaisieScreen> {
                     'force_rupture_newton': null,
                     'deplacement_rupture_mm': null,
                     'contrainte_rupture_mpa': e.contrainteRuptureMpa,
-                    'allongement_rupture_pourcent': e.deformationRupturePourcent,
+                    'deformation_rupture_pourcent': e.deformationRupturePourcent,
                   })
               .toList();
 
