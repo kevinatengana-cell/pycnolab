@@ -20,10 +20,13 @@ jobs:
 
       - name: Install Python dependencies & Build Backend
         run: |
-          cd pycno_core/moteur_python
+          cd pycno_core
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pyinstaller --noconsole --onefile api/main.py --name backend
+          if (Test-Path "requirements-build.txt") { pip install -r requirements-build.txt }
+          elseif (Test-Path "requirements.txt") { pip install -r requirements.txt }
+          if (Test-Path "moteur_python\requirements.txt") { pip install -r moteur_python\requirements.txt }
+          pip install pyinstaller
+          pyinstaller --noconsole --onefile moteur_python/api/main.py --name backend --distpath moteur_python/dist
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
