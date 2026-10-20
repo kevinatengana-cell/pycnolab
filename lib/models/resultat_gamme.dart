@@ -25,8 +25,10 @@ class ResultatEchantillon {
   factory ResultatEchantillon.fromJson(Map<String, dynamic> json) {
     return ResultatEchantillon(
       identifiant: (json["identifiant"] as String?) ?? 'Inconnu',
-      contrainteRuptureMpa: (json["contrainte_rupture_mpa"] as num?)?.toDouble() ?? 0.0,
-      deformationRupturePourcent: (json["deformation_rupture_pourcent"] as num?)?.toDouble() ?? 0.0,
+      contrainteRuptureMpa:
+          (json["contrainte_rupture_mpa"] as num?)?.toDouble() ?? 0.0,
+      deformationRupturePourcent:
+          (json["deformation_rupture_pourcent"] as num?)?.toDouble() ?? 0.0,
       moduleYoungMpa: (json["module_young_mpa"] as num?)?.toDouble(),
       sectionMm2: (json["section_mm2"] as num?)?.toDouble(),
       forceMaxNewton: (json["force_max_newton"] as num?)?.toDouble(),
@@ -61,6 +63,7 @@ class ResultatGamme {
   final double? deformationMoyennePourcent;
   final double? ecartTypeDeformationPourcent;
   final double? ecartTypeModuleYoungMpa;
+  final int? captureId;
 
   ResultatGamme({
     required this.materiauNom,
@@ -74,6 +77,7 @@ class ResultatGamme {
     this.deformationMoyennePourcent,
     this.ecartTypeDeformationPourcent,
     this.ecartTypeModuleYoungMpa,
+    this.captureId,
   });
 
   factory ResultatGamme.fromJson(Map<String, dynamic> json) {
@@ -84,16 +88,21 @@ class ResultatGamme {
           ? DateTime.tryParse(json["horodatage"].toString()) ?? DateTime.now()
           : DateTime.now(),
       resultatsEchantillons: (json["resultats_echantillons"] as List<dynamic>?)
-              ?.map((e) => ResultatEchantillon.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  ResultatEchantillon.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      resistanceMoyenneMpa: (json["resistance_moyenne_mpa"] as num?)?.toDouble() ?? 0.0,
+      resistanceMoyenneMpa:
+          (json["resistance_moyenne_mpa"] as num?)?.toDouble() ?? 0.0,
       ecartTypeMpa: (json["ecart_type_mpa"] as num?)?.toDouble() ?? 0.0,
       moduleYoungMoyenMpa: (json["module_young_moyen_mpa"] as num?)?.toDouble(),
       statut: (json["statut"] as String?) ?? 'non_evalue',
-      deformationMoyennePourcent: (json["deformation_moyenne_pourcent"] as num?)?.toDouble(),
-      ecartTypeDeformationPourcent: (json["ecart_type_deformation_pourcent"] as num?)?.toDouble(),
-      ecartTypeModuleYoungMpa: (json["ecart_type_module_young_mpa"] as num?)?.toDouble(),
+      deformationMoyennePourcent:
+          (json["deformation_moyenne_pourcent"] as num?)?.toDouble(),
+      ecartTypeDeformationPourcent:
+          (json["ecart_type_deformation_pourcent"] as num?)?.toDouble(),
+      ecartTypeModuleYoungMpa:
+          (json["ecart_type_module_young_mpa"] as num?)?.toDouble(),
     );
   }
 
@@ -114,7 +123,8 @@ class ResultatGamme {
         'sigma_ecart_type': ecartTypeMpa,
         'deformation_moyenne': deformationMoyennePourcent,
       },
-      'resultats_echantillons': resultatsEchantillons.map((e) => e.toJson()).toList(),
+      'resultats_echantillons':
+          resultatsEchantillons.map((e) => e.toJson()).toList(),
     };
   }
 }

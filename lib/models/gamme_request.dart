@@ -1,6 +1,4 @@
-// Modèles Dart pour CE QU'ON ENVOIE à l'API Python.
-// Les noms de champs doivent correspondre exactement à schemas.py côté
-// Python (FastAPI/Pydantic lit le JSON par nom de clé).
+// Modèles Dart synchronisés avec les schémas Pydantic / FastAPI du moteur Python.
 
 class MateriauRequest {
   final String nomUsage;
@@ -126,5 +124,31 @@ class GammeRequest {
         "conditions": conditions.toJson(),
         "echantillons": echantillons.map((e) => e.toJson()).toList(),
         "calculs_demandes": calculsDemandes,
+      };
+}
+
+/// Payload direct pour le moteur de calcul numérique vectoriel
+class TractionPayload {
+  final List<double> deplacement;
+  final List<double> force;
+  final double sectionMm2;
+  final double longueurInitialeMm;
+  final Map<String, dynamic>? configPersonnalisee;
+
+  TractionPayload({
+    required this.deplacement,
+    required this.force,
+    required this.sectionMm2,
+    required this.longueurInitialeMm,
+    this.configPersonnalisee,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'deplacement': deplacement,
+        'force': force,
+        'section_mm2': sectionMm2,
+        'longueur_initiale_mm': longueurInitialeMm,
+        if (configPersonnalisee != null)
+          'config_personnalisee': configPersonnalisee,
       };
 }

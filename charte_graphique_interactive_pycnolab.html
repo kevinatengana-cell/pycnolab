@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-[#F8FAF6]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charte Graphique Interactive — PYCNOLAB</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pycno: {
+                            green: '#136034',
+                            'green-dark': '#0d4324',
+                            'green-light': '#1e8047',
+                            brown: '#4A2E1A',
+                            'brown-light': '#684227',
+                            yellow: '#F5A623',
+                            dark: '#2B2B2B',
+                            light: '#F8FAF6',
+                            card: '#FFFFFF'
+                        }
+                    },
+                    fontFamily: {
+                        title: ['Cinzel', 'Georgia', 'serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 550px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 380px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-active {
+            border-bottom: 3px solid #136034;
+            color: #136034;
+            font-weight: 600;
+        }
+        .logo-font {
+            font-family: 'Cinzel', serif;
+        }
+    </style>
+</head>
+<!-- Chosen Palette: Vert PYCNOLAB (#136034), Marron Terre (#4A2E1A), Jaune Énergie (#F5A623), Warm Neutral (#F8FAF6) -->
+<!-- Application Structure Plan: Interactive single-page brand identity dashboard divided into 6 functional sections: 1. Vue d'ensemble & Philosophie, 2. Univers Symbolique du Logo (interactive icon breakdown), 3. Palette Chromatique & Contrôleur WCAG (interactive color specs, palette balance chart, live accessibility tester), 4. Système Typographique (interactive type scale & live text specimen simulator), 5. Normalisation & Zone de Sécurité (Do's & Don'ts interactive grid & clear-space simulator), 6. Studio Mockup Appliqué (real-time customizable business cards, lab coat badge & stationery preview). Designed to provide both strategic brand documentation and actionable utility tools for designers. -->
+<!-- Visualization & Content Choices:
+- Logo Symbol Breakdown -> Interactive grid with icon details -> Click-to-highlight symbol meaning -> HTML/CSS structured cards -> Clear exploration of complex logo components.
+- Color System -> Palette breakdown + Copy-to-clipboard functionality + Dynamic WCAG Contrast Ratio Checker -> Pure JS -> High utility for brand managers.
+- Color Balance Ratio -> Donut Chart -> Chart.js on HTML Canvas -> Visually presents recommended proportions (Vert 50%, Marron 25%, Jaune 15%, Neutres 10%).
+- Type Specimen -> Dynamic live text editor + size/line-height sliders -> Pure JS CSS binding -> Instant design testing.
+- Brand Applications -> Interactive template visualizer (Business card, letterhead, lab coat badge) with editable inputs -> Pure HTML/CSS styling -> Instant realistic simulation.
+Confirming NO SVG graphics used. NO Mermaid JS used. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<body class="h-full font-sans text-pycno-dark bg-pycno-light flex flex-col min-h-screen">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <!-- Brand Identity Preview in Header -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full border-2 border-pycno-green bg-pycno-light flex items-center justify-center font-bold text-pycno-green text-xl shadow-inner logo-font">
+                        P
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold tracking-wider logo-font text-pycno-brown block leading-none">PYCN<span class="inline-block border border-pycno-green rounded-full px-1 text-pycno-green text-sm">♻</span>LAB</span>
+                        <span class="text-xs text-pycno-green font-medium tracking-widest uppercase">Charte Graphique Officielle</span>
+                    </div>
+                </div>
+
+                <!-- Main Navigation -->
+                <nav class="hidden lg:flex space-x-8 h-full items-center text-sm font-medium text-gray-600">
+                    <button onclick="switchTab('overview')" id="nav-overview" class="tab-button tab-active py-7 px-1 transition-colors">Philosophie</button>
+                    <button onclick="switchTab('symbolism')" id="nav-symbolism" class="tab-button py-7 px-1 hover:text-pycno-green transition-colors">Symboles du Logo</button>
+                    <button onclick="switchTab('colors')" id="nav-colors" class="tab-button py-7 px-1 hover:text-pycno-green transition-colors">Palette & Contraste</button>
+                    <button onclick="switchTab('typography')" id="nav-typography" class="tab-button py-7 px-1 hover:text-pycno-green transition-colors">Typographie</button>
+                    <button onclick="switchTab('rules')" id="nav-rules" class="tab-button py-7 px-1 hover:text-pycno-green transition-colors">Règles & Sécurité</button>
+                    <button onclick="switchTab('mockup')" id="nav-mockup" class="tab-button py-7 px-1 hover:text-pycno-green transition-colors">Studio Applications</button>
+                </nav>
+
+                <!-- Mobile Menu Toggle Button -->
+                <div class="flex lg:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-gray-600 hover:text-pycno-green focus:outline-none text-2xl p-2">
+                        ☰
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-4 space-y-1">
+            <button onclick="switchTab('overview'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Philosophie</button>
+            <button onclick="switchTab('symbolism'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Symboles du Logo</button>
+            <button onclick="switchTab('colors'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Palette & Contraste</button>
+            <button onclick="switchTab('typography'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Typographie</button>
+            <button onclick="switchTab('rules'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Règles & Sécurité</button>
+            <button onclick="switchTab('mockup'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-pycno-light">Studio Applications</button>
+        </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- SECTION 1: OVERVIEW -->
+        <section id="section-overview" class="tab-content space-y-8">
+            <div class="bg-gradient-to-r from-pycno-green to-pycno-green-dark text-white rounded-2xl p-8 sm:p-10 shadow-lg relative overflow-hidden">
+                <div class="relative z-10 max-w-3xl space-y-4">
+                    <span class="bg-pycno-yellow text-pycno-dark text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block">Vision & Marque</span>
+                    <h1 class="text-3xl sm:text-5xl font-bold font-title tracking-tight">PYCNOLAB</h1>
+                    <p class="text-lg text-gray-100 leading-relaxed">
+                        Cette charte graphique définit les normes visuelles et identitaires de **PYCNOLAB**. Elle incarne la synergie entre la recherche scientifique de pointe, l'innovation technologique, les énergies renouvelables et la responsabilité environnementale, ancrée sur le continent africain avec une projection internationale.
+                    </p>
+                    <div class="pt-4 flex flex-wrap gap-4">
+                        <button onclick="switchTab('symbolism')" class="bg-white text-pycno-green font-semibold px-5 py-2.5 rounded-lg shadow hover:bg-gray-100 transition">Explorer les symboles</button>
+                        <button onclick="switchTab('mockup')" class="bg-pycno-yellow text-pycno-dark font-semibold px-5 py-2.5 rounded-lg shadow hover:bg-yellow-400 transition">Tester les mockups</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-green-100 text-pycno-green rounded-lg flex items-center justify-center text-2xl mb-4 font-bold">🧪</div>
+                    <h3 class="text-xl font-bold text-pycno-dark mb-2">Recherche & Biotech</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        L'approche scientifique rigoureuse, matérialisée par les outils de laboratoire et d'analyse au cœur des procédés de découverte et d'innovation.
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-amber-100 text-pycno-brown rounded-lg flex items-center justify-center text-2xl mb-4 font-bold">⚡</div>
+                    <h3 class="text-xl font-bold text-pycno-dark mb-2">Énergie & Innovation</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        L'impulsion technologique et les solutions énergétiques durables représentées par la dynamique des réseaux électroniques et de la créativité.
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-emerald-100 text-pycno-green rounded-lg flex items-center justify-center text-2xl mb-4 font-bold">🌍</div>
+                    <h3 class="text-xl font-bold text-pycno-dark mb-2">Ancrage & Éco-responsabilité</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Un ancrage fort en Afrique associé aux principes de l'économie circulaire, de la durabilité et de l'impact sociétal positif.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Key Summary Card -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-bold text-pycno-green mb-3">Guide rapide d'utilisation de cette charte</h3>
+                <p class="text-gray-600 text-sm mb-4">
+                    Cette application dynamique est conçue pour accompagner les designers, développeurs, chercheurs et communicateurs de PYCNOLAB. Utilisez les onglets supérieurs pour accéder aux codes couleur exacts (HEX/CMYK), tester des compositions typographiques, simuler les marges de protection du logo ou générer des éléments de papeterie personnalisés.
+                </p>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Couleur Principale : #136034</span>
+                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Couleur Secondaire : #4A2E1A</span>
+                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Accent : #F5A623</span>
+                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Typographie Titres : Serif (Cinzel / Georgia)</span>
+                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Typographie Texte : Inter / Roboto</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: LOGO SYMBOLISM -->
+        <section id="section-symbolism" class="tab-content hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-pycno-green font-title mb-2">Univers Symbolique & Composition du Logo</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Le logotype PYCNOLAB est une œuvre graphique riche qui intègre des pictogrammes scientifiques et technologiques à l'intérieur de la carte du continent africain, enchâssée dans un globe terrestre interconnecté. Cliquez sur chaque pictogramme pour en analyser la signification et les paramètres graphiques.
+                </p>
+            </div>
+
+            <!-- Interactive Symbol Breakdown Explorer -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Symbol Selector Grid (Left / Top) -->
+                <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4" id="symbol-buttons">
+                    <button onclick="selectSymbol('globe')" id="sym-globe" class="symbol-card p-4 bg-white rounded-xl border-2 border-pycno-green shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">🌐</span>
+                        <span class="text-xs font-bold text-gray-800">Globe Terrestre</span>
+                    </button>
+                    <button onclick="selectSymbol('africa')" id="sym-africa" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">🌍</span>
+                        <span class="text-xs font-bold text-gray-800">Continent Africain</span>
+                    </button>
+                    <button onclick="selectSymbol('microscope')" id="sym-microscope" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">🔬</span>
+                        <span class="text-xs font-bold text-gray-800">Microscope</span>
+                    </button>
+                    <button onclick="selectSymbol('beakers')" id="sym-beakers" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">🧪</span>
+                        <span class="text-xs font-bold text-gray-800">Éprouvettes</span>
+                    </button>
+                    <button onclick="selectSymbol('pcb')" id="sym-pcb" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">🎛️</span>
+                        <span class="text-xs font-bold text-gray-800">Puces Electroniques</span>
+                    </button>
+                    <button onclick="selectSymbol('bulb')" id="sym-bulb" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">💡</span>
+                        <span class="text-xs font-bold text-gray-800">Ampoule & Éclair</span>
+                    </button>
+                    <button onclick="selectSymbol('gear')" id="sym-gear" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">⚙️</span>
+                        <span class="text-xs font-bold text-gray-800">Engrenage & Loupe</span>
+                    </button>
+                    <button onclick="selectSymbol('recycle')" id="sym-recycle" class="symbol-card p-4 bg-white rounded-xl border-2 border-transparent shadow-sm hover:border-pycno-green transition text-center flex flex-col items-center justify-center space-y-2">
+                        <span class="text-3xl">♻️</span>
+                        <span class="text-xs font-bold text-gray-800">Recyclage ("O")</span>
+                    </button>
+                </div>
+
+                <!-- Symbol Detail Display Panel -->
+                <div class="lg:col-span-5 bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col justify-between" id="symbol-detail-card">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="text-4xl p-2 bg-pycno-light rounded-lg border border-gray-200" id="sym-detail-icon">🌐</span>
+                            <div>
+                                <h3 class="text-xl font-bold text-pycno-green" id="sym-detail-title">Globe Terrestre & Rayonnement</h3>
+                                <span class="text-xs font-semibold px-2 py-0.5 bg-green-100 text-pycno-green rounded" id="sym-detail-cat">Ancrage & Vision</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm leading-relaxed mb-4" id="sym-detail-desc">
+                            Le globe symbolise le rayonnement international de PYCNOLAB et son ouverture aux partenariats mondiaux. Les méridiens et parallèles soulignent la précision et la méthodologie scientifique globale.
+                        </p>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between py-1 border-b border-gray-100">
+                                <span class="text-gray-500 font-medium">Couleur dédiée:</span>
+                                <span class="font-bold text-pycno-dark" id="sym-detail-color">Vert PYCNOLAB (#136034)</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-gray-100">
+                                <span class="text-gray-500 font-medium">Valeur incarnée:</span>
+                                <span class="font-bold text-pycno-dark" id="sym-detail-value">Vision globale & Standard de qualité</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-500 font-medium">Emplacement dans le logo:</span>
+                                <span class="font-bold text-pycno-dark" id="sym-detail-pos">Cercle englobant principal</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-100 bg-pycno-light rounded-lg p-3 text-xs text-gray-600 font-mono">
+                        💡 CONSEIL PRINT: Conserver une ligne de contour fine (0.75pt min) pour préserver la définition des méridiens.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PALETTE & CONTRASTE -->
+        <section id="section-colors" class="tab-content hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-pycno-green font-title mb-2">Palette Chromatique Officielle & Analyseur de Contraste</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    La palette de PYCNOLAB équilibre le **Vert Écologie/Tech** (durabilité et avenir), le **Marron Terre** (ancrage et rigueur), et le **Jaune Énergie** (innovation et vitalité). Cliquez sur une carte de couleur pour copier instantanément son code HEX.
+                </p>
+            </div>
+
+            <!-- Color Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Color 1: Vert PYCNOLAB -->
+                <div onclick="copyColor('#136034', 'Vert PYCNOLAB')" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition group">
+                    <div class="h-32 bg-[#136034] p-4 flex justify-end items-start">
+                        <span class="bg-black/30 text-white text-xs px-2 py-1 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition">Copier HEX</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-pycno-dark">Vert PYCNOLAB</h3>
+                            <span class="text-xs bg-green-100 text-pycno-green font-bold px-2 py-0.5 rounded">Principale</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Nature, biotechnologies, durabilité et croissance.</p>
+                        <div class="pt-2 text-xs font-mono space-y-1 text-gray-600 border-t border-gray-100">
+                            <div class="flex justify-between"><span>HEX:</span><span class="font-bold text-gray-800">#136034</span></div>
+                            <div class="flex justify-between"><span>RGB:</span><span>19, 96, 52</span></div>
+                            <div class="flex justify-between"><span>CMJN:</span><span>88%, 30%, 95%, 25%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color 2: Marron Terre -->
+                <div onclick="copyColor('#4A2E1A', 'Marron Terre')" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition group">
+                    <div class="h-32 bg-[#4A2E1A] p-4 flex justify-end items-start">
+                        <span class="bg-black/30 text-white text-xs px-2 py-1 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition">Copier HEX</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-pycno-dark">Marron Terre</h3>
+                            <span class="text-xs bg-amber-100 text-pycno-brown font-bold px-2 py-0.5 rounded">Secondaire</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Ancrage territorial, solidité et tradition académique.</p>
+                        <div class="pt-2 text-xs font-mono space-y-1 text-gray-600 border-t border-gray-100">
+                            <div class="flex justify-between"><span>HEX:</span><span class="font-bold text-gray-800">#4A2E1A</span></div>
+                            <div class="flex justify-between"><span>RGB:</span><span>74, 46, 26</span></div>
+                            <div class="flex justify-between"><span>CMJN:</span><span>35%, 70%, 85%, 50%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color 3: Jaune Énergie -->
+                <div onclick="copyColor('#F5A623', 'Jaune Énergie')" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition group">
+                    <div class="h-32 bg-[#F5A623] p-4 flex justify-end items-start">
+                        <span class="bg-black/30 text-white text-xs px-2 py-1 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition">Copier HEX</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-pycno-dark">Jaune Énergie</h3>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded">Accent</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Innovation, électricité, dynamisme et créativité.</p>
+                        <div class="pt-2 text-xs font-mono space-y-1 text-gray-600 border-t border-gray-100">
+                            <div class="flex justify-between"><span>HEX:</span><span class="font-bold text-gray-800">#F5A623</span></div>
+                            <div class="flex justify-between"><span>RGB:</span><span>245, 166, 35</span></div>
+                            <div class="flex justify-between"><span>CMJN:</span><span>0%, 38%, 95%, 0%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color 4: Gris Contour & Fond -->
+                <div onclick="copyColor('#2B2B2B', 'Gris Contour')" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition group">
+                    <div class="h-32 bg-[#2B2B2B] p-4 flex justify-end items-start">
+                        <span class="bg-white/30 text-white text-xs px-2 py-1 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition">Copier HEX</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-pycno-dark">Gris Contour</h3>
+                            <span class="text-xs bg-gray-100 text-gray-800 font-bold px-2 py-0.5 rounded">Neutre</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Lisibilité, typographie et contours d'illustration.</p>
+                        <div class="pt-2 text-xs font-mono space-y-1 text-gray-600 border-t border-gray-100">
+                            <div class="flex justify-between"><span>HEX:</span><span class="font-bold text-gray-800">#2B2B2B</span></div>
+                            <div class="flex justify-between"><span>RGB:</span><span>43, 43, 43</span></div>
+                            <div class="flex justify-between"><span>CMJN:</span><span>0%, 0%, 0%, 83%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast notification for copy -->
+            <div id="toast" class="fixed bottom-5 right-5 bg-pycno-dark text-white px-4 py-3 rounded-lg shadow-lg hidden flex items-center space-x-2 z-50">
+                <span>📋</span>
+                <span id="toast-message" class="text-sm font-medium">Code couleur copié !</span>
+            </div>
+
+            <!-- Visualization & Accessibility Tools Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Visual Identity Proportion Chart -->
+                <div class="lg:col-span-6 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold text-pycno-dark mb-1">Ratio d'Utilisation Recommandé</h3>
+                    <p class="text-xs text-gray-500 mb-4">Proportions d'application des couleurs sur les supports de communication.</p>
+                    <div class="chart-container">
+                        <canvas id="colorBalanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Live WCAG Accessibility Checker Tool -->
+                <div class="lg:col-span-6 bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-pycno-dark mb-1">Simulateur de Contraste WCAG</h3>
+                        <p class="text-xs text-gray-500 mb-4">Vérifiez l'accessibilité de vos combinaisons Texte / Fond.</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Couleur du Texte</label>
+                                <select id="wcag-text" onchange="updateWCAG()" class="w-full text-xs p-2 border border-gray-300 rounded-md bg-white">
+                                    <option value="#136034">Vert PYCNOLAB (#136034)</option>
+                                    <option value="#4A2E1A" selected>Marron Terre (#4A2E1A)</option>
+                                    <option value="#F5A623">Jaune Énergie (#F5A623)</option>
+                                    <option value="#2B2B2B">Gris Contour (#2B2B2B)</option>
+                                    <option value="#FFFFFF">Blanc Pur (#FFFFFF)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Couleur de Fond</label>
+                                <select id="wcag-bg" onchange="updateWCAG()" class="w-full text-xs p-2 border border-gray-300 rounded-md bg-white">
+                                    <option value="#FFFFFF" selected>Blanc Pur (#FFFFFF)</option>
+                                    <option value="#F8FAF6">Fond Neutre (#F8FAF6)</option>
+                                    <option value="#136034">Vert PYCNOLAB (#136034)</option>
+                                    <option value="#4A2E1A">Marron Terre (#4A2E1A)</option>
+                                    <option value="#2B2B2B">Gris Contour (#2B2B2B)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Preview Box -->
+                        <div id="wcag-preview-box" class="p-6 rounded-lg border border-gray-200 mb-4 transition-colors flex items-center justify-center text-center h-28">
+                            <p id="wcag-preview-text" class="text-base font-medium">
+                                PYCNOLAB — Recherche & Innovation Durable
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- WCAG Results Panel -->
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="text-gray-500 block">Ratio de contraste calculé:</span>
+                            <span id="wcag-ratio" class="text-lg font-bold text-pycno-dark">11.4:1</span>
+                        </div>
+                        <div class="space-x-2">
+                            <span id="wcag-aa" class="px-2 py-1 bg-green-100 text-green-800 rounded font-bold">WCAG AA: Conforme</span>
+                            <span id="wcag-aaa" class="px-2 py-1 bg-green-100 text-green-800 rounded font-bold">WCAG AAA: Conforme</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: TYPOGRAPHY -->
+        <section id="section-typography" class="tab-content hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-pycno-green font-title mb-2">Système Typographique & Testeur Dynamique</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    La charte typographique de PYCNOLAB associe l'élégance académique d'une **police Serif (Cinzel / Georgia)** pour les logotypes et grands titres institutionnels, à la clarté moderne d'une **police Sans-Serif (Inter / Roboto)** pour le corps de texte et l'écosystème digital.
+                </p>
+            </div>
+
+            <!-- Typography Hierarchy Table -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Title Font Card -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-lg text-pycno-green font-title">Police de Titrage (Serif)</h3>
+                            <p class="text-xs text-gray-500">Cinzel / Georgia / Garamond</p>
+                        </div>
+                        <span class="text-xs bg-green-100 text-pycno-green px-2 py-1 rounded font-semibold">Titres & Brand</span>
+                    </div>
+                    <p class="text-xs text-gray-600">
+                        Utilisée pour le logotype, la couverture des rapports scientifiques, les diplômes et les en-têtes officiels. Elle véhicule la tradition académique, le prestige et le sérieux scientifique.
+                    </p>
+                    <div class="p-4 bg-pycno-light rounded-lg font-title space-y-2 text-pycno-dark">
+                        <p class="text-2xl font-bold tracking-wide">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn</p>
+                        <p class="text-sm">0 1 2 3 4 5 6 7 8 9 ( ! @ # $ % ^ & * )</p>
+                    </div>
+                </div>
+
+                <!-- Body Font Card -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-lg text-pycno-brown font-sans">Police d'Accompagnement (Sans-Serif)</h3>
+                            <p class="text-xs text-gray-500">Inter / Roboto / Open Sans</p>
+                        </div>
+                        <span class="text-xs bg-amber-100 text-pycno-brown px-2 py-1 rounded font-semibold">Corps de texte</span>
+                    </div>
+                    <p class="text-xs text-gray-600">
+                        Recommandée pour l'ensemble des contenus administratifs, les sites internet, présentations slide et articles de recherche. Assure une lisibilité optimale sur tous les écrans.
+                    </p>
+                    <div class="p-4 bg-pycno-light rounded-lg font-sans space-y-2 text-pycno-dark">
+                        <p class="text-2xl font-bold tracking-normal">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn</p>
+                        <p class="text-sm">0 1 2 3 4 5 6 7 8 9 ( ! @ # $ % ^ & * )</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Typography Tester -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <h3 class="font-bold text-lg text-pycno-dark">Laboratoire de Test Typographique</h3>
+                        <p class="text-xs text-gray-500">Ajustez les réglages pour observer le rendu en direct.</p>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="flex flex-wrap gap-4 items-center text-xs">
+                        <div>
+                            <label class="block font-medium text-gray-600 mb-1">Police:</label>
+                            <select id="type-family" onchange="renderTypeTest()" class="p-2 border border-gray-300 rounded bg-white">
+                                <option value="font-title">Cinzel / Georgia (Serif Titres)</option>
+                                <option value="font-sans" selected>Inter / Roboto (Sans-Serif Texte)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-600 mb-1">Taille (<span id="type-size-val">18</span>px):</label>
+                            <input type="range" id="type-size" min="12" max="48" value="18" oninput="renderTypeTest()" class="w-28 accent-pycno-green">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-600 mb-1">Graisse:</label>
+                            <select id="type-weight" onchange="renderTypeTest()" class="p-2 border border-gray-300 rounded bg-white">
+                                <option value="font-light">Light (300)</option>
+                                <option value="font-normal" selected>Regular (400)</option>
+                                <option value="font-semibold">Medium/Semi (600)</option>
+                                <option value="font-bold">Bold (700)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input & Specimen Display -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Saisissez votre texte d'essai:</label>
+                        <input type="text" id="type-input" value="PYCNOLAB : L'alliance de la science, de la technologie et du développement durable en Afrique." oninput="renderTypeTest()" class="w-full text-sm p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pycno-green focus:outline-none">
+                    </div>
+                    
+                    <div class="p-8 bg-pycno-light rounded-xl border border-gray-200 min-h-[140px] flex items-center">
+                        <p id="type-display" class="font-sans text-lg text-pycno-dark leading-relaxed w-full">
+                            PYCNOLAB : L'alliance de la science, de la technologie et du développement durable en Afrique.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: RULES & CLEAR SPACE -->
+        <section id="section-rules" class="tab-content hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-pycno-green font-title mb-2">Normes d'Utilisation & Zone de Protection</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Afin d'assurer une lisibilité maximale et l'intégrité de la marque, respectez impérativement la zone d'exclusion minimale et les règles d'interdiction visuelle ci-dessous.
+                </p>
+            </div>
+
+            <!-- Clear Space Simulator Card -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-6">
+                <div class="border-b border-gray-100 pb-3">
+                    <h3 class="font-bold text-lg text-pycno-dark">Zone de Sécurité (Clear Space)</h3>
+                    <p class="text-xs text-gray-500">La zone minimale relative égale à la hauteur de la lettre "P" doit entourer le logotype en permanence.</p>
+                </div>
+
+                <!-- Interactive Canvas Visualizer for Clear Space -->
+                <div class="flex flex-col items-center justify-center p-8 bg-pycno-light rounded-xl border border-dashed border-gray-300">
+                    <div class="relative p-8 border-2 border-dashed border-pycno-green bg-white rounded-lg shadow-sm text-center">
+                        <!-- Margin Identifiers -->
+                        <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-pycno-green uppercase">Zone "P" (Haut)</span>
+                        <span class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-pycno-green uppercase">Zone "P" (Bas)</span>
+                        <span class="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-pycno-green uppercase -rotate-90">Zone "P"</span>
+                        <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-pycno-green uppercase rotate-90">Zone "P"</span>
+                        
+                        <!-- Logo Content Mock inside clear space -->
+                        <div class="py-6 px-10 flex items-center space-x-4">
+                            <div class="w-16 h-16 rounded-full border-2 border-pycno-green flex items-center justify-center font-bold text-2xl text-pycno-green font-title">
+                                P
+                            </div>
+                            <div class="text-left">
+                                <span class="text-3xl font-bold font-title text-pycno-brown tracking-wider">PYCN<span class="text-pycno-green">♻</span>LAB</span>
+                                <div class="h-1 bg-pycno-green w-full mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 text-center">
+                        ✓ Aucun texte, illustration, bordure d'impression ou élément graphique ne doit pénétrer dans cet espace réservé.
+                    </p>
+                </div>
+
+                <!-- Technical Constraints Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <span class="font-bold text-pycno-green block mb-1">📏 Taille Minimale Web / Écran</span>
+                        <p class="text-gray-600">Largeur minimale du bloc complet : **140 px**. Pour les emplacements ultra-réduits (&lt; 140px), utiliser uniquement le pictogramme cercle du "O" (Globe + Recyclage).</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <span class="font-bold text-pycno-brown block mb-1">🖨️ Taille Minimale Print / Impression</span>
+                        <p class="text-gray-600">Largeur minimale d'impression : **35 mm**. Veiller à maintenir la lisibilité des détails de la carte de l'Afrique et des pictogrammes internes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Do's & Don'ts Matrix -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- DO'S -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-emerald-200">
+                    <h3 class="font-bold text-lg text-emerald-700 mb-4 flex items-center space-x-2">
+                        <span>✅ Utilisation Conforme (DO)</span>
+                    </h3>
+                    <ul class="space-y-3 text-xs text-gray-700">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span>Utiliser la version complète en couleur sur fond blanc ou très clair (#FFFFFF, #F8FAF6).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span>Utiliser la version monochrome blanche sur fond sombre (Vert PYCNOLAB ou Marron Terre).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span>Conserver scrupuleusement les proportions de hauteur et largeur du logotype lors du redimensionnement.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span>Utiliser le pictogramme circulaire isolé uniquement en favicon, avatar ou macaron de validation.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- DON'TS -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-rose-200">
+                    <h3 class="font-bold text-lg text-rose-700 mb-4 flex items-center space-x-2">
+                        <span>❌ Interdictions Strictes (DON'T)</span>
+                    </h3>
+                    <ul class="space-y-3 text-xs text-gray-700">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-rose-500 font-bold">✕</span>
+                            <span>Ne pas déformer, étirer ou anamorphoser le logo de manière non proportionnelle.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-rose-500 font-bold">✕</span>
+                            <span>Ne pas modifier la disposition ou l'ordre des pictogrammes internes à la carte de l'Afrique.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-rose-500 font-bold">✕</span>
+                            <span>Ne pas remplacer la palette officielle par d'autres couleurs non approuvées (ex: néon, rouge).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-rose-500 font-bold">✕</span>
+                            <span>Ne pas superposer le logo couleur sur des photos complexes de fond sans aplat de sécurité.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: APPLICATIONS MOCKUP STUDIO -->
+        <section id="section-mockup" class="tab-content hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-pycno-green font-title mb-2">Studio d'Applications & Générateur de Support</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Testez en temps réel l'application des codes de marque sur les différents supports officiels (carte de visite, papier en-tête, badge de laboratoire). Personnalisez les champs pour visualiser immédiatement le rendu.
+                </p>
+            </div>
+
+            <!-- Customization Form Controls -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <h3 class="font-bold text-sm text-pycno-dark mb-4">Données de simulation pour les supports :</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div>
+                        <label class="block text-gray-600 font-medium mb-1">Nom & Prénom</label>
+                        <input type="text" id="mock-name" value="Dr. Amadou DIOP" oninput="updateMockups()" class="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-pycno-green focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 font-medium mb-1">Titre / Fonction</label>
+                        <input type="text" id="mock-title" value="Directeur de Recherche Biotech" oninput="updateMockups()" class="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-pycno-green focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 font-medium mb-1">Email professionnel</label>
+                        <input type="text" id="mock-email" value="a.diop@pycnolab.org" oninput="updateMockups()" class="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-pycno-green focus:outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Previews Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Business Card Preview (Left) -->
+                <div class="lg:col-span-6 space-y-4">
+                    <h3 class="font-bold text-sm text-gray-700">1. Carte de Visite Officielle (85 × 55 mm)</h3>
+                    
+                    <!-- Recto Card -->
+                    <div class="w-full h-56 bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col justify-between relative overflow-hidden">
+                        <div class="h-1.5 bg-pycno-green absolute top-0 left-0 right-0"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full border border-pycno-green flex items-center justify-center font-bold text-pycno-green text-xs font-title">P</div>
+                                <span class="font-bold font-title text-pycno-brown text-lg tracking-wider">PYCN<span class="text-pycno-green">♻</span>LAB</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-pycno-green bg-green-50 px-2 py-0.5 rounded">RECHERCHE & TECH</span>
+                        </div>
+                        
+                        <div>
+                            <h4 id="card-preview-name" class="font-bold text-pycno-dark text-base">Dr. Amadou DIOP</h4>
+                            <p id="card-preview-title" class="text-xs text-pycno-green font-medium">Directeur de Recherche Biotech</p>
+                        </div>
+
+                        <div class="text-[11px] text-gray-500 space-y-0.5 border-t border-gray-100 pt-2 flex justify-between">
+                            <span id="card-preview-email">a.diop@pycnolab.org</span>
+                            <span>www.pycnolab.org</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lab Badge Preview (Right) -->
+                <div class="lg:col-span-6 space-y-4">
+                    <h3 class="font-bold text-sm text-gray-700">2. Badge de Blouse de Laboratoire</h3>
+                    
+                    <div class="w-full h-56 bg-pycno-light rounded-xl shadow-md border border-gray-200 p-6 flex items-center justify-between relative overflow-hidden">
+                        <div class="w-2 h-full bg-pycno-green absolute left-0 top-0"></div>
+                        
+                        <div class="flex items-center space-x-6 pl-4">
+                            <!-- Badge Photo Placeholder -->
+                            <div class="w-24 h-28 bg-gray-200 rounded-lg border-2 border-pycno-green flex flex-col items-center justify-center text-gray-400">
+                                <span class="text-3xl">👤</span>
+                                <span class="text-[9px] mt-1 font-bold text-gray-500">PHOTO</span>
+                            </div>
+
+                            <!-- Badge Info -->
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="font-bold font-title text-pycno-brown text-xl">PYCN<span class="text-pycno-green">♻</span>LAB</span>
+                                    <p class="text-[9px] uppercase tracking-widest text-pycno-green font-semibold">Accréditation Scientifique</p>
+                                </div>
+                                <div>
+                                    <h4 id="badge-preview-name" class="font-bold text-pycno-dark text-sm">Dr. Amadou DIOP</h4>
+                                    <p id="badge-preview-title" class="text-xs text-pycno-brown">Directeur de Recherche Biotech</p>
+                                </div>
+                                <div class="inline-block bg-pycno-green text-white text-[10px] font-bold px-3 py-1 rounded">
+                                    NIV-3 / LABO PRINCIPAL
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Interactive Compliance Checklist Calculator -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-4">
+                <h3 class="font-bold text-lg text-pycno-dark">Vérificateur de Conformité de Support</h3>
+                <p class="text-xs text-gray-500">Cochez les critères validés avant toute diffusion de document officiel PYCNOLAB.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs" id="compliance-checklist">
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Logo couleur sur fond blanc (#FFFFFF)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Zone de sécurité "P" respectée tout autour</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Polices homologuées (Cinzel / Inter)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Pas de déformation des proportions du logo</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Contraste texte/fond supérieur à 4.5:1</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 bg-pycno-light rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                        <input type="checkbox" onchange="calcCompliance()" class="chk-item rounded text-pycno-green focus:ring-pycno-green">
+                        <span>Taille minimale d'impression ≥ 35 mm</span>
+                    </label>
+                </div>
+
+                <!-- Score indicator bar -->
+                <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-semibold text-gray-600">Score de conformité graphique :</span>
+                        <span id="compliance-score" class="text-base font-bold text-pycno-green">0%</span>
+                    </div>
+                    <span id="compliance-status" class="text-xs font-bold px-3 py-1 rounded bg-rose-100 text-rose-800">Non conforme</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 PYCNOLAB — Recherche, Tech & Développement Sustainable. Charte Graphique Officielle.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Data Store for Symbol Breakdown
+        const symbolData = {
+            globe: {
+                icon: '🌐',
+                title: 'Globe Terrestre & Rayonnement',
+                category: 'Ancrage & Vision',
+                desc: 'Le globe symbolise le rayonnement international de PYCNOLAB et son ouverture aux partenariats mondiaux. Les méridiens et parallèles soulignent la précision et la méthodologie scientifique globale.',
+                color: 'Vert PYCNOLAB (#136034)',
+                value: 'Vision globale & Standard de qualité',
+                pos: 'Cercle englobant principal'
+            },
+            africa: {
+                icon: '🌍',
+                title: 'Continent Africain',
+                category: 'Identité & Ancrage',
+                desc: 'Représente le cœur des opérations et l’impact prioritaire sur le développement technologique et sanitaire de l’Afrique avec une perspective internationale.',
+                color: 'Marron Terre (#4A2E1A) / Contour Vert',
+                value: 'Identité continentale & Impact local',
+                pos: 'Centre du globe'
+            },
+            microscope: {
+                icon: '🔬',
+                title: 'Microscope d\'Analyse',
+                category: 'Laboratoire & Recherche',
+                desc: 'Élément central représentant la recherche fondamentale, la rigueur d’analyse clinique et la précision expérimentale au service des biotechnologies.',
+                color: 'Gris Contour (#2B2B2B)',
+                value: 'Rigueur scientifique & Analyse',
+                pos: 'Sud de l’Afrique'
+            },
+            beakers: {
+                icon: '🧪',
+                title: 'Éprouvettes & Flacons',
+                category: 'Biotechnologie & Chimie',
+                desc: 'Simbolisent la formulation chimique, la biologie appliquée et les procédés de transformation des ressources pour la santé et l’agriculture.',
+                color: 'Lignes Vertes / Liquides Neutres',
+                value: 'Expérimentation & Biotechnologie',
+                pos: 'Centre Afrique (Zone équatoriale)'
+            },
+            pcb: {
+                icon: '🎛️',
+                title: 'Puces & Circuits Électroniques',
+                category: 'Digitalisation & Tech',
+                desc: 'Les pistes de circuits imprimés qui irriguent la carte représentent l’intégration du digital, de l’intelligence artificielle et des objets connectés (IoT).',
+                color: 'Vert PYCNOLAB (#136034)',
+                value: 'Digitalisation & High-Tech',
+                pos: 'Irrigation globale sur la carte'
+            },
+            bulb: {
+                icon: '💡',
+                title: 'Ampoule & Idées',
+                category: 'Créativité & R&D',
+                desc: 'Symbolise l’émergence d’idées novatrices, la propriété intellectuelle et les brevets issus des laboratoires de recherche PYCNOLAB.',
+                color: 'Jaune Énergie (#F5A623)',
+                value: 'Créativité & Innovation',
+                pos: 'Nord-Ouest de l’Afrique'
+            },
+            gear: {
+                icon: '⚙️',
+                title: 'Engrenage & Loupe',
+                category: 'Ingénierie & Procédés',
+                desc: 'Illustre la résolution de problèmes complexes, le contrôle qualité et l’ingénierie appliquée aux processus industriels durables.',
+                color: 'Marron Terre (#4A2E1A)',
+                value: 'Ingénierie & Méthode',
+                pos: 'Nord de l’Afrique'
+            },
+            recycle: {
+                icon: '♻️',
+                title: 'Symbole de Recyclage ("O")',
+                category: 'Éco-responsabilité',
+                desc: 'Placé au cœur du macaron et dans la lettre "O" de PYCNOLAB, il matérialise l’engagement ferme vers l’économie circulaire et la durabilité.',
+                color: 'Vert PYCNOLAB (#136034)',
+                value: 'Économie circulaire & Écologie',
+                pos: 'Lettre O du nom & Macaron'
+            }
+        };
+
+        // Navigation Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('hover:text-pycno-green');
+            });
+
+            const selectedSection = document.getElementById(`section-${tabId}`);
+            if (selectedSection) {
+                selectedSection.classList.remove('hidden');
+            }
+
+            const selectedNav = document.getElementById(`nav-${tabId}`);
+            if (selectedNav) {
+                selectedNav.classList.add('tab-active');
+            }
+
+            // Re-render chart if navigating to color section
+            if (tabId === 'colors' && colorChart) {
+                setTimeout(() => colorChart.update(), 100);
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Symbol Selector Handler
+        function selectSymbol(key) {
+            const data = symbolData[key];
+            if (!data) return;
+
+            // Highlight button
+            document.querySelectorAll('.symbol-card').forEach(b => b.classList.replace('border-pycno-green', 'border-transparent'));
+            const activeBtn = document.getElementById(`sym-${key}`);
+            if (activeBtn) activeBtn.classList.replace('border-transparent', 'border-pycno-green');
+
+            // Update details
+            document.getElementById('sym-detail-icon').innerText = data.icon;
+            document.getElementById('sym-detail-title').innerText = data.title;
+            document.getElementById('sym-detail-cat').innerText = data.category;
+            document.getElementById('sym-detail-desc').innerText = data.desc;
+            document.getElementById('sym-detail-color').innerText = data.color;
+            document.getElementById('sym-detail-value').innerText = data.value;
+            document.getElementById('sym-detail-pos').innerText = data.pos;
+        }
+
+        // Copy Color to Clipboard
+        function copyColor(hex, name) {
+            navigator.clipboard.writeText(hex).then(() => {
+                const toast = document.getElementById('toast');
+                const toastMsg = document.getElementById('toast-message');
+                toastMsg.innerText = `Code ${name} (${hex}) copié !`;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            });
+        }
+
+        // WCAG Contrast Calculation Logic
+        function getLuminance(hex) {
+            const rgb = parseInt(hex.slice(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >>  8) & 0xff;
+            const b = (rgb >>  0) & 0xff;
+            const a = [r, g, b].map(v => {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
+        function getContrastRatio(hex1, hex2) {
+            const lum1 = getLuminance(hex1);
+            const lum2 = getLuminance(hex2);
+            const brightest = Math.max(lum1, lum2);
+            const darkest = Math.min(lum1, lum2);
+            return (brightest + 0.05) / (darkest + 0.05);
+        }
+
+        function updateWCAG() {
+            const textColor = document.getElementById('wcag-text').value;
+            const bgColor = document.getElementById('wcag-bg').value;
+
+            const box = document.getElementById('wcag-preview-box');
+            const txt = document.getElementById('wcag-preview-text');
+
+            box.style.backgroundColor = bgColor;
+            txt.style.color = textColor;
+
+            const ratio = getContrastRatio(textColor, bgColor);
+            document.getElementById('wcag-ratio').innerText = ratio.toFixed(2) + ':1';
+
+            const aaTag = document.getElementById('wcag-aa');
+            const aaaTag = document.getElementById('wcag-aaa');
+
+            if (ratio >= 4.5) {
+                aaTag.className = "px-2 py-1 bg-green-100 text-green-800 rounded font-bold";
+                aaTag.innerText = "WCAG AA: Conforme";
+            } else {
+                aaTag.className = "px-2 py-1 bg-red-100 text-red-800 rounded font-bold";
+                aaTag.innerText = "WCAG AA: Échec";
+            }
+
+            if (ratio >= 7.0) {
+                aaaTag.className = "px-2 py-1 bg-green-100 text-green-800 rounded font-bold";
+                aaaTag.innerText = "WCAG AAA: Conforme";
+            } else {
+                aaaTag.className = "px-2 py-1 bg-red-100 text-red-800 rounded font-bold";
+                aaaTag.innerText = "WCAG AAA: Échec";
+            }
+        }
+
+        // Live Typography Tester Handler
+        function renderTypeTest() {
+            const fontFam = document.getElementById('type-family').value;
+            const fontSize = document.getElementById('type-size').value;
+            const fontWeight = document.getElementById('type-weight').value;
+            const textVal = document.getElementById('type-input').value;
+
+            document.getElementById('type-size-val').innerText = fontSize;
+            const display = document.getElementById('type-display');
+
+            display.className = `${fontFam} ${fontWeight} text-pycno-dark leading-relaxed w-full`;
+            display.style.fontSize = `${fontSize}px`;
+            display.innerText = textVal || "Saisissez votre texte...";
+        }
+
+        // Live Mockup Data Binding
+        function updateMockups() {
+            const name = document.getElementById('mock-name').value || "Dr. Amadou DIOP";
+            const title = document.getElementById('mock-title').value || "Directeur de Recherche";
+            const email = document.getElementById('mock-email').value || "contact@pycnolab.org";
+
+            document.getElementById('card-preview-name').innerText = name;
+            document.getElementById('card-preview-title').innerText = title;
+            document.getElementById('card-preview-email').innerText = email;
+
+            document.getElementById('badge-preview-name').innerText = name;
+            document.getElementById('badge-preview-title').innerText = title;
+        }
+
+        // Compliance Checklist Score Calculator
+        function calcCompliance() {
+            const checkboxes = document.querySelectorAll('.chk-item');
+            let checkedCount = 0;
+            checkboxes.forEach(chk => { if (chk.checked) checkedCount++; });
+
+            const percent = Math.round((checkedCount / checkboxes.length) * 100);
+            const scoreEl = document.getElementById('compliance-score');
+            const statusEl = document.getElementById('compliance-status');
+
+            scoreEl.innerText = `${percent}%`;
+
+            if (percent === 100) {
+                statusEl.className = "text-xs font-bold px-3 py-1 rounded bg-green-100 text-green-800";
+                statusEl.innerText = "100% Conforme";
+            } else if (percent >= 50) {
+                statusEl.className = "text-xs font-bold px-3 py-1 rounded bg-amber-100 text-amber-800";
+                statusEl.innerText = "Partiellement Conforme";
+            } else {
+                statusEl.className = "text-xs font-bold px-3 py-1 rounded bg-rose-100 text-rose-800";
+                statusEl.innerText = "Non Conforme";
+            }
+        }
+
+        // Chart.js Color Proportion Chart Initialization
+        let colorChart;
+        function initColorChart() {
+            const ctx = document.getElementById('colorBalanceChart').getContext('2d');
+            colorChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Vert PYCNOLAB (#136034)', 'Marron Terre (#4A2E1A)', 'Jaune Énergie (#F5A623)', 'Fonds & Neutres (#FFFFFF / #2B2B2B)'],
+                    datasets: [{
+                        data: [50, 25, 15, 10],
+                        backgroundColor: [
+                            '#136034',
+                            '#4A2E1A',
+                            '#F5A623',
+                            '#2B2B2B'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                },
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}% de présence recommandés`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Window Load Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            initColorChart();
+            updateWCAG();
+            renderTypeTest();
+            updateMockups();
+            calcCompliance();
+        });
+    </script>
+</body>
+</html>

@@ -116,7 +116,7 @@ class MoteurProtocole(MoteurCalcul):
             contrainte_rupture_mpa=contrainte_custom,
             deformation_rupture_pourcent=deformation_rupture,
             module_young_mpa=module_young,
-            force_max_newton=force_max,
+            
             energie_rupture_joules=energie_rupture,
             limite_elastique_mpa=limite_elastique,
         )

@@ -31,6 +31,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/pycno_core/build/
+/pycno_core/dist/
 /coverage/
 
 # Symbolication related
@@ -43,3 +45,63 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# --- Ajouts de sécurité (Builds & Binaires locaux) ---
+/dist/
+/release/
+/build_release/
+/InstallerOutput/
+/installer/
+
+# Extensions binaires à bloquer partout
+*.exe
+*.dll
+*.pyd
+*.msi
+*.so
+
+# Fichiers temporaires Office / Excel
+~$*.xlsx
+~$*.docm
+~$*.docx
+
+# --- Sécurité & Nettoyage Dossiers de Build ---
+/dist/
+/release/
+/build_release/
+/InstallerOutput/
+/installer/
+/essais/
+/scripts/
+/test_python/
+
+# --- Fichiers de données, rapports et temporaires ---
+/*.xlsx
+/*.csv
+/*.pdf
+/*.docm
+/*.jpg
+/*.rtf
+/*.txt
+/*.spec
+~$*# --- Sécurité & Nettoyage Dossiers de Build ---
+/dist/
+/release/
+/build_release/
+/InstallerOutput/
+/installer/
+/essais/
+/scripts/
+/test_python/
+
+# --- Fichiers de données, rapports et temporaires ---
+/*.xlsx
+/*.csv
+/*.pdf
+/*.docm
+/*.jpg
+/*.rtf
+/*.txt
+/*.spec
+~$*

@@ -4,3 +4,16 @@ linter:
   rules:
     prefer_const_constructors: true
     prefer_final_locals: true
+
+
+analyzer:
+  exclude:
+    - "Nouveau dossier/**"
+    - "**/Nouveau dossier/**"
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**

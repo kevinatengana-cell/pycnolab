@@ -5,7 +5,7 @@ import 'package:math_expressions/math_expressions.dart';
 import 'package:path/path.dart' as p;
 
 // =============================================================================
-// MODÈLES DE DONNÉES & CLASSES EN AUXILIAIRE
+// MODÈLES DE DONNÉES & CLASSES AUXILIAIRES
 // =============================================================================
 
 class VariableEntree {
@@ -27,14 +27,12 @@ class ProtocoleTemplate {
   final String codeNorme;
   final String categorie;
   final IconData icon;
-  final Color couleur;
 
   ProtocoleTemplate({
     required this.titre,
     required this.codeNorme,
     required this.categorie,
     required this.icon,
-    required this.couleur,
   });
 
   static List<ProtocoleTemplate> templates = [
@@ -42,22 +40,19 @@ class ProtocoleTemplate {
       titre: 'Résistance Béton',
       codeNorme: 'NF EN 12390-3',
       categorie: 'Béton',
-      icon: Icons.foundation,
-      couleur: Colors.blue,
+      icon: Icons.foundation_rounded,
     ),
     ProtocoleTemplate(
       titre: 'Traction Acier',
       codeNorme: 'ISO 6892-1',
       categorie: 'Métal',
-      icon: Icons.architecture,
-      couleur: Colors.orange,
+      icon: Icons.architecture_rounded,
     ),
     ProtocoleTemplate(
       titre: 'Analyse Sol',
       codeNorme: 'NF P94-051',
       categorie: 'Géotechnique',
-      icon: Icons.landscape,
-      couleur: Colors.green,
+      icon: Icons.landscape_rounded,
     ),
   ];
 }
@@ -99,7 +94,6 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
   int _currentStep = 0;
   final int _precisionResultat = 2;
 
-  // Contrôleurs Formulaire Étape 1 & 3
   final TextEditingController _codeNormeCtrl = TextEditingController();
   final TextEditingController _categorieCtrl = TextEditingController();
   final TextEditingController _nomProtocoleCtrl = TextEditingController();
@@ -108,16 +102,24 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
   final TextEditingController _uniteResultatCtrl = TextEditingController();
   final TextEditingController _formuleExprCtrl = TextEditingController();
 
-  // Étape 2 : Variables
   final List<VariableEntree> _variables = [
-    VariableEntree(key: 'force_f', label: 'Force maximale F', unite: 'kN', valeurDefaut: 450.0),
-    VariableEntree(key: 'section_a', label: 'Section A', unite: 'mm²', valeurDefaut: 150.0),
+    VariableEntree(
+      key: 'force_f',
+      label: 'Force maximale F',
+      unite: 'kN',
+      valeurDefaut: 450.0,
+    ),
+    VariableEntree(
+      key: 'section_a',
+      label: 'Section A',
+      unite: 'mm²',
+      valeurDefaut: 150.0,
+    ),
   ];
 
-  // Étape 4 : Sandbox & Validation
   final Map<String, double> _sandboxValues = {};
   SyntaxValidationResult _syntaxValidation =
-      SyntaxValidationResult(isValid: true, message: 'Expression valide');
+      SyntaxValidationResult(isValid: true, message: 'Expression valide ✓');
   EvaluationResult? _sandboxResult;
 
   @override
@@ -126,7 +128,7 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     _nomResultatCtrl.text = 'Résistance à la compression';
     _uniteResultatCtrl.text = 'MPa';
     _formuleExprCtrl.text = '(force_f * 1000) / section_a';
-    
+
     _initSandboxValues();
     _validerFormuleEnTempsReel();
   }
@@ -183,18 +185,17 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
   void _insererJetonFormule(String jeton) {
     final text = _formuleExprCtrl.text;
     final selection = _formuleExprCtrl.selection;
-    
-    final newText = text.replaceRange(
-      selection.start < 0 ? text.length : selection.start,
-      selection.end < 0 ? text.length : selection.end,
-      jeton,
-    );
-    
+
+    final start = selection.start < 0 ? text.length : selection.start;
+    final end = selection.end < 0 ? text.length : selection.end;
+
+    final newText = text.replaceRange(start, end, jeton);
+
     _formuleExprCtrl.text = newText;
     _formuleExprCtrl.selection = TextSelection.collapsed(
-      offset: (selection.start < 0 ? text.length : selection.start) + jeton.length,
+      offset: start + jeton.length,
     );
-    
+
     _validerFormuleEnTempsReel();
   }
 
@@ -210,13 +211,15 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     final expr = _formuleExprCtrl.text.trim();
     if (expr.isEmpty) {
       setState(() {
-        _syntaxValidation = SyntaxValidationResult(isValid: false, message: 'La formule est vide');
+        _syntaxValidation = SyntaxValidationResult(
+          isValid: false,
+          message: 'La formule est vide',
+        );
         _sandboxResult = EvaluationResult.failure('Formule vide');
       });
       return;
     }
 
-    // 1. Contrôle de parité des parenthèses
     int parentheses = 0;
     for (var char in expr.runes) {
       if (String.fromCharCode(char) == '(') parentheses++;
@@ -234,27 +237,30 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
       return;
     }
 
-    // 2. Vérification des tokens inconnus (variables non définies)
     final definedKeys = _variables.map((v) => v.key).toSet();
     final knownFunctions = {'sqrt', 'abs', 'min', 'max', 'pi', 'e'};
-    // Extrait tous les identificateurs alphabétiques de la formule
-    final identifiers = RegExp(r'[a-zA-Z_][a-zA-Z0-9_]*').allMatches(expr).map((m) => m.group(0)!).toSet();
-    final unknownIds = identifiers.difference(definedKeys).difference(knownFunctions);
+    final identifiers = RegExp(r'[a-zA-Z_][a-zA-Z0-9_]*')
+        .allMatches(expr)
+        .map((m) => m.group(0)!)
+        .toSet();
+    final unknownIds =
+        identifiers.difference(definedKeys).difference(knownFunctions);
     if (unknownIds.isNotEmpty) {
       setState(() {
         _syntaxValidation = SyntaxValidationResult(
           isValid: false,
           message: 'Variable(s) inconnue(s) : ${unknownIds.join(', ')}',
         );
-        _sandboxResult = EvaluationResult.failure('Variable(s) inconnue(s) : ${unknownIds.join(', ')}');
+        _sandboxResult = EvaluationResult.failure(
+          'Variable(s) inconnue(s) : ${unknownIds.join(', ')}',
+        );
       });
       return;
     }
 
-    // 3. Essai de parsing via math_expressions
     try {
-      final parser = GrammarParser();
-      parser.parse(expr); // lève une exception si syntaxe invalide
+      final parser = Parser();
+      parser.parse(expr.replaceAll('^', '**'));
     } catch (e) {
       setState(() {
         _syntaxValidation = SyntaxValidationResult(
@@ -267,7 +273,10 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     }
 
     setState(() {
-      _syntaxValidation = SyntaxValidationResult(isValid: true, message: 'Expression valide ✓');
+      _syntaxValidation = SyntaxValidationResult(
+        isValid: true,
+        message: 'Expression valide ✓',
+      );
     });
 
     _calculerSandboxAutomatique();
@@ -280,13 +289,11 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     if (exprText.isEmpty) return;
 
     try {
-      // Remplace ^ par ** pour math_expressions
       final exprNormalisee = exprText.replaceAll('^', '**');
 
-      final parser = GrammarParser();
+      final parser = Parser();
       final Expression parsedExpr = parser.parse(exprNormalisee);
 
-      // Construit le contexte d'évaluation à partir des sandboxValues dynamiques
       final contextModel = ContextModel();
       for (final entry in _sandboxValues.entries) {
         contextModel.bindVariable(
@@ -294,11 +301,11 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
           Number(entry.value),
         );
       }
-      // Constantes mathématiques
       contextModel.bindVariable(Variable('pi'), Number(3.141592653589793));
       contextModel.bindVariable(Variable('e'), Number(2.718281828459045));
 
-      final double result = parsedExpr.evaluate(EvaluationType.REAL, contextModel) as double;
+      final double result =
+          parsedExpr.evaluate(EvaluationType.REAL, contextModel) as double;
 
       if (result.isInfinite) {
         setState(() {
@@ -324,14 +331,15 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     if (_nomProtocoleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Veuillez renseigner la désignation du protocole avant de sauvegarder.'),
+          content: Text(
+            'Veuillez renseigner la désignation du protocole avant de sauvegarder.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    // Construction du JSON de protocole
     final protocole = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'created_at': DateTime.now().toIso8601String(),
@@ -363,7 +371,6 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     };
 
     try {
-      // Dossier de sauvegarde : même répertoire que l'exécutable (ou Documents)
       final exeDir = File(Platform.resolvedExecutable).parent;
       final protocoleDir = Directory(p.join(exeDir.path, 'protocoles'));
       if (!await protocoleDir.exists()) {
@@ -375,7 +382,10 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
           .toLowerCase()
           .replaceAll(RegExp(r'[^a-z0-9]+'), '_');
       final fichier = File(
-        p.join(protocoleDir.path, '${slug}_${DateTime.now().millisecondsSinceEpoch}.json'),
+        p.join(
+          protocoleDir.path,
+          '${slug}_${DateTime.now().millisecondsSinceEpoch}.json',
+        ),
       );
       await fichier.writeAsString(
         const JsonEncoder.withIndent('  ').convert(protocole),
@@ -386,8 +396,8 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Protocole sauvegardé : ${fichier.path}'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 6),
+            backgroundColor: const Color(0xFF1B5E20),
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -396,7 +406,7 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur de sauvegarde : $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red.shade700,
           ),
         );
       }
@@ -415,256 +425,458 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
     super.dispose();
   }
 
+  InputDecoration _inputDecoration(
+    String label, {
+    IconData? prefixIcon,
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: const Color(0xFF6B7280), size: 20)
+          : null,
+      suffixIcon: suffixIcon,
+      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF1B5E20), width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Créateur de Protocole de Test'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(24),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              'Configuration des normes, paramètres et expressions',
-              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        toolbarHeight: 64,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Créateur de Protocole de Test',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+                fontSize: 18,
+                color: Color(0xFF1B5E20),
+              ),
             ),
-          ),
+            SizedBox(height: 2),
+            Text(
+              'Configuration des normes, paramètres d\'essai et expressions mathématiques',
+              style: TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF374151)),
+        shape: const Border(
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
         ),
       ),
-      body: Theme(
-        data: theme.copyWith(
-          colorScheme: colorScheme.copyWith(
-            primary: colorScheme.primary,
-          ),
-        ),
-        child: Stepper(
-          type: StepperType.horizontal,
-          currentStep: _currentStep,
-          onStepTapped: (step) => setState(() => _currentStep = step),
-          onStepContinue: () {
-            if (_currentStep < 3) {
-              setState(() => _currentStep += 1);
-            } else {
-              _sauvegarderProtocole();
-            }
-          },
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep -= 1);
-            }
-          },
-          controlsBuilder: (context, details) {
-            final isLastStep = _currentStep == 3;
-            return Padding(
-              padding: const EdgeInsets.only(top: 24.0),
-              child: Row(
-                children: [
-                  FilledButton.icon(
-                    onPressed: details.onStepContinue,
-                    icon: Icon(isLastStep ? Icons.check_circle : Icons.arrow_forward),
-                    label: Text(isLastStep ? 'Terminer et Valider' : 'Suivant'),
+      body: Stepper(
+        type: StepperType.horizontal,
+        currentStep: _currentStep,
+        elevation: 0,
+        onStepTapped: (step) => setState(() => _currentStep = step),
+        onStepContinue: () {
+          if (_currentStep < 3) {
+            setState(() => _currentStep += 1);
+          } else {
+            _sauvegarderProtocole();
+          }
+        },
+        onStepCancel: () {
+          if (_currentStep > 0) {
+            setState(() => _currentStep -= 1);
+          }
+        },
+        controlsBuilder: (context, details) {
+          final isLastStep = _currentStep == 3;
+          return Padding(
+            padding: const EdgeInsets.only(top: 28.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_currentStep > 0) ...[
+                  OutlinedButton(
+                    onPressed: details.onStepCancel,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF374151),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Retour'),
                   ),
                   const SizedBox(width: 12),
-                  if (_currentStep > 0)
-                    OutlinedButton(
-                      onPressed: details.onStepCancel,
-                      child: const Text('Retour'),
-                    ),
                 ],
+                FilledButton.icon(
+                  onPressed: details.onStepContinue,
+                  icon: Icon(
+                    isLastStep
+                        ? Icons.check_circle_rounded
+                        : Icons.arrow_forward_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    isLastStep ? 'Terminer et Enregistrer' : 'Suivant',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B5E20),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        steps: [
+          Step(
+            title: const Text('Norme'),
+            isActive: _currentStep >= 0,
+            state: _currentStep > 0 ? StepState.complete : StepState.editing,
+            content: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-            );
-          },
-          steps: [
-            // =================================================================
-            // ÉTAPE 1 : RÉFÉRENTIEL & NORME
-            // =================================================================
-            Step(
-              title: const Text('Norme'),
-              isActive: _currentStep >= 0,
-              state: _currentStep > 0 ? StepState.complete : StepState.editing,
-              content: Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Modèles pré-configurés', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
+                  const Text(
+                    "MODÈLES PRÉ-CONFIGURÉS",
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
-                    height: 110,
+                    height: 52,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: ProtocoleTemplate.templates.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final t = ProtocoleTemplate.templates[index];
                         return ActionChip(
-                          avatar: Icon(t.icon, color: t.couleur),
-                          label: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(t.titre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text(t.codeNorme, style: const TextStyle(fontSize: 10)),
-                            ],
+                          elevation: 0,
+                          backgroundColor: const Color(0xFFF9FAFB),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          avatar: Icon(
+                            t.icon,
+                            color: const Color(0xFF1B5E20),
+                            size: 18,
+                          ),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Text(
+                                  t.titre,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8F5E9),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    t.codeNorme,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Color(0xFF1B5E20),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           onPressed: () => _appliquerTemplate(t),
                         );
                       },
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _codeNormeCtrl,
+                          decoration: _inputDecoration(
+                            'Code de la Norme',
+                            prefixIcon: Icons.gavel_rounded,
+                            hintText: 'ex: NF EN 12390-3',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _categorieCtrl,
+                          decoration: _inputDecoration(
+                            'Catégorie de Matériau',
+                            prefixIcon: Icons.category_rounded,
+                            hintText: 'ex: Béton, Métal',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _codeNormeCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Code de la Norme (ex: NF EN 12390-3)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.gavel),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _categorieCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Catégorie de Matériau',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.category),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
                     controller: _nomProtocoleCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Désignation du Protocole',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.assignment),
+                    decoration: _inputDecoration(
+                      'Désignation du Protocole',
+                      prefixIcon: Icons.assignment_rounded,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionCtrl,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Description / Notes d\'application',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
+                    maxLines: 3,
+                    decoration: _inputDecoration(
+                      'Description / Notes d\'application',
+                      prefixIcon: Icons.description_rounded,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // =================================================================
-            // ÉTAPE 2 : VARIABLES D'ENTRÉE
-            // =================================================================
-            Step(
-              title: const Text('Variables'),
-              isActive: _currentStep >= 1,
-              state: _currentStep > 1 ? StepState.complete : (_currentStep == 1 ? StepState.editing : StepState.indexed),
-              content: Column(
+          ),
+          Step(
+            title: const Text('Variables'),
+            isActive: _currentStep >= 1,
+            state: _currentStep > 1
+                ? StepState.complete
+                : (_currentStep == 1
+                    ? StepState.editing
+                    : StepState.indexed),
+            content: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Variables de mesure (${_variables.length})', style: theme.textTheme.titleMedium),
-                      IconButton.filledTonal(
+                      Text(
+                        'Variables de mesure (${_variables.length})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      FilledButton.icon(
                         onPressed: _ajouterVariable,
-                        icon: const Icon(Icons.add),
-                        tooltip: 'Ajouter une variable',
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Ajouter une variable'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          foregroundColor: const Color(0xFF1B5E20),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   ..._variables.asMap().entries.map((entry) {
                     final idx = entry.key;
                     final v = entry.value;
-                    return Card(
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: colorScheme.outlineVariant),
-                        borderRadius: BorderRadius.circular(12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: TextFormField(
-                                    initialValue: v.label,
-                                    decoration: const InputDecoration(labelText: 'Nom de la variable', isDense: true),
-                                    onChanged: (val) {
-                                      // Correction bug : mettre à jour _sandboxValues avec la nouvelle clé
-                                      final ancienneKey = v.key;
-                                      final ancienneValeur = _sandboxValues[ancienneKey];
-                                      v.label = val;
-                                      v.key = _slugify(val);
-                                      // Migrer la valeur existante vers la nouvelle clé
-                                      _sandboxValues.remove(ancienneKey);
-                                      _sandboxValues[v.key] = ancienneValeur ?? v.valeurDefaut ?? 0.0;
-                                      _validerFormuleEnTempsReel();
-                                    },
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  initialValue: v.label,
+                                  decoration: _inputDecoration(
+                                    'Nom de la variable',
+                                  ),
+                                  onChanged: (val) {
+                                    final ancienneKey = v.key;
+                                    final ancienneValeur =
+                                        _sandboxValues[ancienneKey];
+                                    v.label = val;
+                                    v.key = _slugify(val);
+                                    _sandboxValues.remove(ancienneKey);
+                                    _sandboxValues[v.key] = ancienneValeur ??
+                                        v.valeurDefaut ??
+                                        0.0;
+                                    _validerFormuleEnTempsReel();
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  initialValue: v.unite,
+                                  decoration: _inputDecoration('Unité'),
+                                  onChanged: (val) => v.unite = val,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: Color(0xFFEF4444),
+                                ),
+                                onPressed: () => _supprimerVariable(idx),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue:
+                                      v.valeurDefaut?.toString() ?? '',
+                                  keyboardType: TextInputType.number,
+                                  decoration: _inputDecoration(
+                                    'Valeur par défaut / Test',
+                                  ),
+                                  onChanged: (val) {
+                                    final numVal = double.tryParse(val) ?? 0.0;
+                                    v.valeurDefaut = numVal;
+                                    _sandboxValues[v.key] = numVal;
+                                    _calculerSandboxAutomatique();
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFE5E7EB),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 2,
-                                  child: TextFormField(
-                                    initialValue: v.unite,
-                                    decoration: const InputDecoration(labelText: 'Unité', isDense: true),
-                                    onChanged: (val) => v.unite = val,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    const Text(
+                                      'Clé : ',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                    Text(
+                                      v.key,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1B5E20),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  onPressed: () => _supprimerVariable(idx),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    initialValue: v.valeurDefaut?.toString() ?? '',
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Valeur par défaut / Test', isDense: true),
-                                    onChanged: (val) {
-                                      final numVal = double.tryParse(val) ?? 0.0;
-                                      v.valeurDefaut = numVal;
-                                      _sandboxValues[v.key] = numVal;
-                                      _calculerSandboxAutomatique();
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Chip(
-                                  label: Text('Clé : ${v.key}', style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-                                  backgroundColor: colorScheme.surfaceContainerHigh,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     );
                   }),
                 ],
               ),
             ),
-
-            // =================================================================
-            // ÉTAPE 3 : FORMULE DE CALCUL
-            // =================================================================
-            Step(
-              title: const Text('Formule'),
-              isActive: _currentStep >= 2,
-              state: _currentStep > 2 ? StepState.complete : (_currentStep == 2 ? StepState.editing : StepState.indexed),
-              content: Column(
+          ),
+          Step(
+            title: const Text('Formule'),
+            isActive: _currentStep >= 2,
+            state: _currentStep > 2
+                ? StepState.complete
+                : (_currentStep == 2
+                    ? StepState.editing
+                    : StepState.indexed),
+            content: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -672,157 +884,284 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _nomResultatCtrl,
-                          decoration: const InputDecoration(labelText: 'Nom du Résultat Finale', border: OutlineInputBorder()),
+                          decoration: _inputDecoration('Nom du Résultat Final'),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       SizedBox(
-                        width: 100,
+                        width: 140,
                         child: TextFormField(
                           controller: _uniteResultatCtrl,
-                          decoration: const InputDecoration(labelText: 'Unité', border: OutlineInputBorder()),
+                          decoration: _inputDecoration('Unité'),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: _formuleExprCtrl,
-                    style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      labelText: 'Expression de Calcul',
-                      hintText: '(v1 * 1000) / v2',
-                      border: const OutlineInputBorder(),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    decoration: _inputDecoration(
+                      'Expression de Calcul',
+                      hintText: '(force_f * 1000) / section_a',
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.backspace_outlined),
+                        icon: const Icon(
+                          Icons.backspace_outlined,
+                          size: 20,
+                        ),
                         onPressed: _effacerDernierJeton,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: _syntaxValidation.isValid ? Colors.green.shade50 : Colors.red.shade50,
+                      color: _syntaxValidation.isValid
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFFEE2E2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _syntaxValidation.isValid ? Colors.green : Colors.red),
+                      border: Border.all(
+                        color: _syntaxValidation.isValid
+                            ? const Color(0xFFA5D6A7)
+                            : const Color(0xFFFCA5A5),
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          _syntaxValidation.isValid ? Icons.check_circle : Icons.error,
-                          color: _syntaxValidation.isValid ? Colors.green.shade700 : Colors.red.shade700,
-                          size: 20,
+                          _syntaxValidation.isValid
+                              ? Icons.check_circle_rounded
+                              : Icons.error_outline_rounded,
+                          color: _syntaxValidation.isValid
+                              ? const Color(0xFF1B5E20)
+                              : const Color(0xFFDC2626),
+                          size: 18,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _syntaxValidation.message ?? '',
                             style: TextStyle(
-                              color: _syntaxValidation.isValid ? Colors.green.shade900 : Colors.red.shade900,
-                              fontSize: 12,
+                              color: _syntaxValidation.isValid
+                                  ? const Color(0xFF1B5E20)
+                                  : const Color(0xFF991B1B),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text('Variables disponibles (cliquez pour insérer) :', style: theme.textTheme.labelMedium),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Variables disponibles :',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
                     children: _variables.map((v) {
                       return ActionChip(
-                        label: Text(v.key, style: const TextStyle(fontFamily: 'monospace')),
+                        elevation: 0,
+                        backgroundColor: const Color(0xFFF3F4F6),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        label: Text(
+                          v.key,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            color: Color(0xFF1B5E20),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         onPressed: () => _insererJetonFormule(v.key),
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Opérateurs & Fonctions :',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Opérateurs & Fonctions :', style: theme.textTheme.labelMedium),
-                  const SizedBox(height: 4),
                   Wrap(
                     spacing: 6,
-                    runSpacing: 4,
-                    children: ['+', '-', '*', '/', '^', '(', ')', 'sqrt', 'abs', 'min', 'max', 'pi'].map((op) {
-                      return ChoiceChip(
-                        selected: false,
-                        label: Text(op, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        onSelected: (_) => _insererJetonFormule(op),
+                    runSpacing: 6,
+                    children: [
+                      '+',
+                      '-',
+                      '*',
+                      '/',
+                      '^',
+                      '(',
+                      ')',
+                      'sqrt',
+                      'abs',
+                      'min',
+                      'max',
+                      'pi',
+                    ].map((op) {
+                      return ActionChip(
+                        elevation: 0,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        label: Text(
+                          op,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                        onPressed: () => _insererJetonFormule(op),
                       );
                     }).toList(),
                   ),
                 ],
               ),
             ),
-
-            // =================================================================
-            // ÉTAPE 4 : APERÇU LIVE & SANDBOX
-            // =================================================================
-            Step(
-              title: const Text('Test Live'),
-              isActive: _currentStep >= 3,
-              state: _currentStep == 3 ? StepState.editing : StepState.indexed,
-              content: Column(
+          ),
+          Step(
+            title: const Text('Test Live'),
+            isActive: _currentStep >= 3,
+            state: _currentStep == 3 ? StepState.editing : StepState.indexed,
+            content: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    color: colorScheme.primaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _nomProtocoleCtrl.text.isEmpty ? 'Nouveau Protocole' : _nomProtocoleCtrl.text,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '${_codeNormeCtrl.text} • ${_categorieCtrl.text}',
-                            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onPrimaryContainer),
-                          ),
-                          const Divider(),
-                          Text(
-                            'Formule : ${_formuleExprCtrl.text}',
-                            style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Résultat du Calcul Sandbox :', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _nomProtocoleCtrl.text.isEmpty
+                              ? 'Nouveau Protocole'
+                              : _nomProtocoleCtrl.text,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B5E20),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_codeNormeCtrl.text.isEmpty ? 'Sans norme' : _codeNormeCtrl.text} • ${_categorieCtrl.text.isEmpty ? 'Général' : _categorieCtrl.text}',
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Divider(height: 24, color: Color(0xFFE5E7EB)),
+                        Row(
+                          children: [
+                            const Text(
+                              'Formule : ',
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              _formuleExprCtrl.text,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Résultat du Calcul Sandbox',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 28,
+                      horizontal: 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFA5D6A7)),
                     ),
                     child: Column(
                       children: [
                         Text(
-                          _nomResultatCtrl.text.isEmpty ? 'Résultat' : _nomResultatCtrl.text,
-                          style: theme.textTheme.labelLarge,
+                          _nomResultatCtrl.text.isEmpty
+                              ? 'Résultat'
+                              : _nomResultatCtrl.text,
+                          style: const TextStyle(
+                            color: Color(0xFF1B5E20),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         if (_sandboxResult != null && _sandboxResult!.isSuccess)
                           Text(
                             '${_sandboxResult!.value!.toStringAsFixed(_precisionResultat)} ${_uniteResultatCtrl.text}',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: colorScheme.primary,
+                            style: const TextStyle(
+                              color: Color(0xFF1B5E20),
+                              fontSize: 32,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
                             ),
                           )
                         else
                           Text(
                             _sandboxResult?.errorMessage ?? 'Calcul impossible',
-                            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Color(0xFFDC2626),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                       ],
                     ),
@@ -830,8 +1169,8 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

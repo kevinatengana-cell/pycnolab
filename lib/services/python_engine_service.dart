@@ -6,9 +6,11 @@ import 'package:http/http.dart' as http;
 import '../models/feuille_excel_model.dart';
 import '../models/gamme_request.dart';
 import '../models/resultat_gamme.dart';
+import 'backend_api_endpoint.dart';
 
 class PythonEngineService {
-  static const String _baseUrl = 'http://127.0.0.1:8123';
+  static String get baseUrl => BackendApiEndpoint.baseUrl;
+  static String get _baseUrl => baseUrl;
 
   Future<Map<String, dynamic>> analyserTraction(TractionPayload payload) async {
     final response = await http.post(
@@ -30,9 +32,7 @@ class PythonEngineService {
   }) async {
     final body = {
       'nom_gamme': nomGamme,
-      'echantillons': echantillons
-          .map((e) => (e as TractionPayload).toJson())
-          .toList(),
+      'echantillons': echantillons.map((e) => e.toJson()).toList(),
     };
     final response = await http.post(
       Uri.parse('$_baseUrl/api/calculs/gamme'),
@@ -229,6 +229,9 @@ class PythonEngineService {
   /// Liste les gammes/échantillons d'un fichier brut sans exiger de
   /// géométrie — sert à construire l'écran de saisie des dimensions par
   /// échantillon (compression) avant de lancer le calcul.
+  ///
+  /// Le backend renvoie également `a_feuille_dimensions` (booléen) pour
+  /// indiquer si le fichier contient une feuille de dimensions exploitable.
   Future<Map<String, dynamic>> listerEchantillons({
     required String typeEssai,
     required String cheminFichier,
@@ -246,20 +249,49 @@ class PythonEngineService {
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
+  Future<Map<String, Object?>> lireDonneesBrutes({
+    required String typeEssai,
+    required String cheminFichier,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/essais/$typeEssai/lire-brut'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'chemin_fichier': cheminFichier}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erreur de lecture du classeur (${response.statusCode}) : ${response.body}',
+      );
+    }
+    return Map<String, Object?>.from(
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map,
+    );
+  }
+
   /// Calcule un aperçu des résultats (Cont(max)/Def rupt/E par échantillon
   /// et par gamme) sans produire de fichier Excel.
+  ///
+  /// Pour la traction, `forme` sélectionne la formule de section appliquée
+  /// aux dimensions lues dans le fichier. Si le fichier ne contient pas de
+  /// feuille de dimensions, `geometrieTraction` doit contenir `section_mm2`
+  /// et `l0_mm` saisis par l'utilisateur.
   Future<Map<String, dynamic>> calculerEssaiDepuisExcel({
     required String typeEssai,
     required String cheminFichier,
     double? l0Mm,
     Map<String, dynamic>? geometrieCompression,
     Map<String, dynamic>? geometrieFlexion,
+    Map<String, dynamic>? geometrieTraction,
+    String? forme,
   }) async {
     final body = <String, dynamic>{
       'chemin_fichier': cheminFichier,
       if (l0Mm != null) 'l0_mm': l0Mm,
-      if (geometrieCompression != null) 'geometrie_compression': geometrieCompression,
+      if (geometrieCompression != null)
+        'geometrie_compression': geometrieCompression,
       if (geometrieFlexion != null) 'geometrie_flexion': geometrieFlexion,
+      if (geometrieTraction != null) 'geometrie_traction': geometrieTraction,
+      if (forme != null) 'forme': forme,
     };
     final response = await http.post(
       Uri.parse('$_baseUrl/essais/$typeEssai/calculer-depuis-excel'),
@@ -274,8 +306,32 @@ class PythonEngineService {
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
+  Future<Map<String, Object?>> calculerDonneesCapture({
+    required String typeEssai,
+    required Map<String, Object?> donnees,
+    double l0Mm = 20.0,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/essais/$typeEssai/calculer'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'donnees': donnees, 'l0_mm': l0Mm}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erreur du calcul sur capture (${response.statusCode}) : ${response.body}',
+      );
+    }
+    return Map<String, Object?>.from(
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map,
+    );
+  }
+
   /// Calcule et produit le fichier Excel intégralement rempli, sauvegardé
   /// à `cheminDestination`.
+  ///
+  /// Pour la traction, `forme` sélectionne le bloc de dimensions à écrire
+  /// et la formule de section. Si le fichier ne contient pas de feuille de
+  /// dimensions, `geometrieTraction` doit contenir `section_mm2`.
   Future<String> exporterEssaiExcel({
     required String typeEssai,
     required String cheminFichier,
@@ -283,13 +339,18 @@ class PythonEngineService {
     double? l0Mm,
     Map<String, dynamic>? geometrieCompression,
     Map<String, dynamic>? geometrieFlexion,
+    Map<String, dynamic>? geometrieTraction,
+    String? forme,
     String? cheminModele,
   }) async {
     final body = <String, dynamic>{
       'chemin_fichier': cheminFichier,
       if (l0Mm != null) 'l0_mm': l0Mm,
-      if (geometrieCompression != null) 'geometrie_compression': geometrieCompression,
+      if (geometrieCompression != null)
+        'geometrie_compression': geometrieCompression,
       if (geometrieFlexion != null) 'geometrie_flexion': geometrieFlexion,
+      if (geometrieTraction != null) 'geometrie_traction': geometrieTraction,
+      if (forme != null) 'forme': forme,
       if (cheminModele != null) 'chemin_modele': cheminModele,
     };
     final response = await http.post(

@@ -1,0 +1,71 @@
+name: Build PycnoLab Windows & Installer
+
+on:
+  push:
+    branches: [ main, master, packaging-propre ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies & Build Backend
+        run: |
+          cd pycno_core/moteur_python
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pyinstaller --noconsole --onefile api/main.py --name backend
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          cache: true
+
+      - name: Install Flutter Dependencies & Build App
+        run: |
+          flutter pub get
+          flutter build windows --release
+
+      - name: Prepare Release Folder for Inno Setup
+        shell: pwsh
+        run: |
+          # Crée le dossier release à la racine
+          New-Item -ItemType Directory -Force -Path "release"
+          
+          # Copie les fichiers de build Flutter vers release
+          Copy-Item -Recurse -Force "build\windows\x64\runner\Release\*" "release\"
+          
+          # Crée un sous-dossier backend et y place le backend.exe compilé par PyInstaller
+          New-Item -ItemType Directory -Force -Path "release\backend"
+          Copy-Item -Force "pycno_core\moteur_python\dist\backend.exe" "release\backend\"
+
+      - name: Install Inno Setup via Chocolatey
+        run: choco install innosetup -y
+
+      - name: Compile Inno Setup Installer
+        run: |
+          iscc pycnolab.iss
+
+      - name: Display Hashes for VirusTotal Check
+        shell: pwsh
+        run: |
+          Write-Host "--- HASHES ---"
+          Get-FileHash -Path "build\windows\x64\runner\Release\pycnolab.exe" -Algorithm SHA256
+          Get-FileHash -Path "pycno_core\moteur_python\dist\backend.exe" -Algorithm SHA256
+
+      - name: Upload Artifacts (ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PycnoLab-Release-Bundle
+          path: |
+            InstallerOutput\

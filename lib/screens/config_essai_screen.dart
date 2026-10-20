@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import '../models/gamme_request.dart';
 import 'import_screen.dart';
 
@@ -17,18 +17,37 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
 
   // Liste de tous les calculs possibles
   final List<Map<String, dynamic>> _calculsDisponibles = [
-    {"id": "contrainte_rupture", "nom": "Contrainte à la rupture (MPa)", "desc": "Contrainte maximale supportée avant rupture."},
-    {"id": "deformation_rupture", "nom": "Déformation à la rupture (%)", "desc": "Allongement relatif maximal mesuré."},
-    {"id": "module_young", "nom": "Module d'Young (MPa)", "desc": "Pente de la zone élastique de la courbe."},
-    {"id": "energie_rupture", "nom": "Énergie à la rupture (J)", "desc": "Aire sous la courbe force-déplacement."},
-    {"id": "limite_elastique", "nom": "Limite Élastique (MPa)", "desc": "Contrainte de fin de proportionnalité."},
+    {
+      "id": "contrainte_rupture",
+      "nom": "Contrainte à la rupture (MPa)",
+      "desc": "Contrainte maximale supportée avant rupture."
+    },
+    {
+      "id": "deformation_rupture",
+      "nom": "Déformation à la rupture (%)",
+      "desc": "Allongement relatif maximal mesuré."
+    },
+    {
+      "id": "module_young",
+      "nom": "Module d'Young (MPa)",
+      "desc": "Pente de la zone élastique de la courbe."
+    },
+    {
+      "id": "energie_rupture",
+      "nom": "Énergie à la rupture (J)",
+      "desc": "Aire sous la courbe force-déplacement."
+    },
+    {
+      "id": "limite_elastique",
+      "nom": "Limite Élastique (MPa)",
+      "desc": "Contrainte de fin de proportionnalité."
+    },
   ];
 
   // État des calculs : true s'ils sont cochés
   final Map<String, bool> _calculsCoches = {};
 
-  // Normes disponibles PAR TYPE D'ESSAI - chaque essai a ses propres
-  // normes de référence, pas les mêmes listes partout.
+  // Normes disponibles PAR TYPE D'ESSAI
   static const Map<String, Map<String, List<String>>> _normesParEssai = {
     "traction": {
       "ISO 527": ["contrainte_rupture", "deformation_rupture", "module_young"],
@@ -40,13 +59,23 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
       "ASTM D695": ["contrainte_rupture", "deformation_rupture", "module_young"],
       "Mode Libre": [],
     },
+    "flexion": {
+      "ISO 178": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "ASTM D790": ["contrainte_rupture", "deformation_rupture", "module_young"],
+      "Mode Libre": [],
+    },
   };
 
   Map<String, List<String>> get _normesConfig =>
       _normesParEssai[widget.typeEssai] ?? _normesParEssai["traction"]!;
 
-  String get _titreEssai =>
-      widget.typeEssai == "compression" ? "l'Essai de Compression" : "l'Essai de Traction";
+  static const Map<String, String> _titresParEssai = {
+    "traction": "l'Essai de Traction",
+    "compression": "l'Essai de Compression",
+    "flexion": "l'Essai de Flexion",
+  };
+
+  String get _titreEssai => _titresParEssai[widget.typeEssai] ?? _titresParEssai["traction"]!;
 
   @override
   void initState() {
@@ -60,13 +89,11 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
       _selectedNorm = norme;
       final obligatoires = _normesConfig[norme] ?? [];
       
-      // On coche automatiquement les obligatoires
       for (var calc in _calculsDisponibles) {
         final id = calc["id"] as String;
         if (obligatoires.contains(id)) {
           _calculsCoches[id] = true;
         } else {
-          // On garde l'état précédent pour les optionnels s'ils existent, sinon false
           _calculsCoches[id] = _calculsCoches[id] ?? false;
         }
       }
@@ -78,13 +105,11 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
   }
 
   void _allerAImport() {
-    // Récupérer la liste des IDs cochés
     final calculsDemandes = _calculsCoches.entries
         .where((e) => e.value)
         .map((e) => e.key)
         .toList();
 
-    // Créer la configuration de base de la gamme
     final configInitiale = GammeRequest(
       materiau: MateriauRequest(nomUsage: "À définir", codeInterne: "TEMP", famille: "autre"),
       norme: NormeRequest(code: _selectedNorm, designation: _selectedNorm),
@@ -104,12 +129,25 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Slate-900
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text('Configuration de $_titreEssai'),
-        backgroundColor: Colors.transparent,
+        toolbarHeight: 64,
+        title: Text(
+          'Configuration de $_titreEssai',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 18,
+            color: Color(0xFF1B5E20),
+          ),
+        ),
+        backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF374151)),
+        shape: const Border(
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+        ),
       ),
       body: Row(
         children: [
@@ -118,14 +156,21 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
             flex: 1,
             child: Container(
               decoration: BoxDecoration(
-                border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey),
               ),
               child: ListView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                 children: [
                   const Text(
-                    "PROTOCOLE",
-                    style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    "PROTOCOLE D'ESSAI",
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ..._normesConfig.keys.map((norme) => _buildNormeTile(norme)).toList(),
@@ -144,16 +189,20 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
                 children: [
                   const Text(
                     "Calculs à effectuer",
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Color(0xFF1A1A1A),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    "Les calculs obligatoires pour la norme $_selectedNorm sont verrouillés.",
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                    "Les calculs obligatoires pour la norme $_selectedNorm sont automatiquement activés.",
+                    style: const TextStyle(color: Color(0xFF5F6368), fontSize: 14),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   
-                  // Liste des toggles (Effet Glassmorphism)
+                  // Liste des toggles
                   Expanded(
                     child: ListView.builder(
                       itemCount: _calculsDisponibles.length,
@@ -168,19 +217,21 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+
                   // Bouton Suivant
                   Align(
                     alignment: Alignment.bottomRight,
-                    child: ElevatedButton.icon(
+                    child: FilledButton.icon(
                       onPressed: _allerAImport,
-                      icon: const Icon(Icons.arrow_forward),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                       label: const Text("Passer à l'importation"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -199,30 +250,31 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () => _appliquerNorme(norme),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? const Color(0xFFE8F5E9) : const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? const Color(0xFF3B82F6) : Colors.white.withOpacity(0.05),
-              width: 1.5,
+              color: isSelected ? const Color(0xFF1B5E20) : const Color(0xFFE5E7EB),
+              width: isSelected ? 1.5 : 1,
             ),
           ),
           child: Row(
             children: [
               Icon(
-                norme == "Mode Libre" ? Icons.settings_suggest : Icons.verified,
-                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF64748B),
+                norme == "Mode Libre" ? Icons.tune_rounded : Icons.verified_rounded,
+                color: isSelected ? const Color(0xFF1B5E20) : const Color(0xFF9CA3AF),
+                size: 20,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Text(
                 norme,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 16,
+                  color: isSelected ? const Color(0xFF1B5E20) : const Color(0xFF374151),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 15,
                 ),
               ),
             ],
@@ -234,44 +286,52 @@ class _ConfigEssaiScreenState extends State<ConfigEssaiScreen> {
 
   Widget _buildCalculTile(Map<String, dynamic> calc, bool isChecked, bool isObligatoire, String id) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.7),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isChecked ? const Color(0xFF3B82F6).withOpacity(0.5) : Colors.white.withOpacity(0.05),
+          color: isChecked ? const Color(0xFFA5D6A7) : const Color(0xFFE5E7EB),
+          width: 1,
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SwitchListTile(
-              title: Text(
-                calc["nom"],
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: isChecked ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              subtitle: Text(
-                calc["desc"],
-                style: const TextStyle(color: Color(0xFF94A3B8)),
-              ),
-              value: isChecked,
-              activeColor: const Color(0xFF3B82F6),
-              onChanged: isObligatoire ? null : (bool value) {
+      child: SwitchListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Text(
+          calc["nom"],
+          style: TextStyle(
+            color: const Color(0xFF1A1A1A),
+            fontWeight: isChecked ? FontWeight.bold : FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: Text(
+          calc["desc"],
+          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+        ),
+        value: isChecked,
+        activeColor: const Color(0xFF1B5E20),
+        onChanged: isObligatoire
+            ? null
+            : (bool value) {
                 setState(() {
                   _calculsCoches[id] = value;
                 });
               },
-              secondary: Icon(
-                isObligatoire ? Icons.lock : Icons.analytics_outlined,
-                color: isObligatoire ? const Color(0xFF64748B) : (isChecked ? const Color(0xFF3B82F6) : const Color(0xFF64748B)),
-              ),
-            ),
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isObligatoire
+                ? const Color(0xFFF3F4F6)
+                : (isChecked ? const Color(0xFFE8F5E9) : const Color(0xFFF9FAFB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            isObligatoire ? Icons.lock_outline_rounded : Icons.analytics_outlined,
+            color: isObligatoire
+                ? const Color(0xFF9CA3AF)
+                : (isChecked ? const Color(0xFF1B5E20) : const Color(0xFF9CA3AF)),
+            size: 20,
           ),
         ),
       ),

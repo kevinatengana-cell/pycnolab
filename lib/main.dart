@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'screens/config_essai_screen.dart';
@@ -27,9 +29,26 @@ class PycnoLabApp extends StatefulWidget {
 }
 
 class _PycnoLabAppState extends State<PycnoLabApp> {
+  late final AppLifecycleListener _lifecycleListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycleListener = AppLifecycleListener(
+      onStateChange: (state) {
+        if (state == AppLifecycleState.detached) {
+          final launcher = backendLauncher;
+          if (launcher != null) unawaited(launcher.arreter());
+        }
+      },
+    );
+  }
+
   @override
   void dispose() {
-    backendLauncher?.arreter();
+    _lifecycleListener.dispose();
+    final launcher = backendLauncher;
+    if (launcher != null) unawaited(launcher.arreter());
     super.dispose();
   }
 
@@ -80,7 +99,8 @@ class _PycnoLabAppState extends State<PycnoLabApp> {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0xFFF9FAFB),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -119,8 +139,8 @@ class _PycnoLabAppState extends State<PycnoLabApp> {
             const ConfigEssaiScreen(typeEssai: 'compression'),
         '/flexion': (_) => const ConfigEssaiScreen(typeEssai: 'flexion'),
       },
-      home: LicenseGate(
-        child: _modeTestPont ? const TestPontScreen() : const _EcranDemarrage(),
+      home: const LicenseGate(
+        child: _modeTestPont ? TestPontScreen() : _EcranDemarrage(),
       ),
     );
   }
@@ -135,7 +155,6 @@ class _EcranDemarrage extends StatefulWidget {
 
 class _EcranDemarrageState extends State<_EcranDemarrage> {
   String? _erreur;
-  final List<String> _etapes = ['Interface PycnoLab initialisée.'];
 
   @override
   void initState() {
@@ -153,15 +172,12 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
     }
 
     try {
-      await launcher.demarrer(onStatus: (message) {
-        if (mounted) setState(() => _etapes.add(message));
-      });
+      await launcher.demarrer();
       if (mounted) Navigator.of(context).pushReplacementNamed('/home');
     } catch (error) {
       if (mounted) {
         setState(() {
           _erreur = error.toString();
-          _etapes.add('Échec de connexion au moteur Python.');
         });
       }
     }
@@ -169,8 +185,6 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
@@ -195,7 +209,8 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
                         'assets/images/LOGOS.jpg',
                         height: 120,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
                           Icons.science_rounded,
                           size: 72,
                           color: Color(0xFF1B5E20),
@@ -211,54 +226,6 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Chargement du moteur d\'analyse...',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF5F6368),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Journal d'initialisation
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ..._etapes.map(
-                              (etape) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.check_circle_outline,
-                                      size: 16,
-                                      color: Color(0xFF2E7D32),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        etape,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF374151),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
                       const SizedBox(height: 24),
 
                       if (_erreur == null)
@@ -271,14 +238,6 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
                                 color: Color(0xFF1B5E20),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Initialisation en cours...',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF5F6368),
                               ),
                             ),
                           ],

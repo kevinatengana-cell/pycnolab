@@ -14,6 +14,8 @@ dependencies:
   path: ^1.9.0
   fl_chart: ^0.68.0
   math_expressions: ^2.4.0
+  sqflite_common_ffi: ^2.4.0+3
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
@@ -22,3 +24,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/LOGOS.jpg
+    - assets/licenses/reserve_cles_1_An.txt
+    - assets/licenses/reserve_cles_1_Mois.txt
+    - assets/licenses/reserve_cles_3_Mois.txt
+    - assets/licenses/reserve_cles_6_Mois.txt
