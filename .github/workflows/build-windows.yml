@@ -19,14 +19,15 @@ jobs:
           python-version: '3.10'
 
       - name: Install Python dependencies & Build Backend
+        shell: pwsh
         run: |
           cd pycno_core
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           if (Test-Path "requirements-build.txt") { pip install -r requirements-build.txt }
           elseif (Test-Path "requirements.txt") { pip install -r requirements.txt }
-          if (Test-Path "moteur_python\requirements.txt") { pip install -r moteur_python\requirements.txt }
           pip install pyinstaller
-          pyinstaller --noconsole --onefile moteur_python/api/main.py --name backend --distpath moteur_python/dist
+          # Utilise votre fichier .spec officiel
+          pyinstaller --clean pycnolab_engine.spec
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -42,15 +43,23 @@ jobs:
       - name: Prepare Release Folder for Inno Setup
         shell: pwsh
         run: |
-          # Crée le dossier release à la racine
           New-Item -ItemType Directory -Force -Path "release"
-          
-          # Copie les fichiers de build Flutter vers release
           Copy-Item -Recurse -Force "build\windows\x64\runner\Release\*" "release\"
           
-          # Crée un sous-dossier backend et y place le backend.exe compilé par PyInstaller
           New-Item -ItemType Directory -Force -Path "release\backend"
-          Copy-Item -Force "pycno_core\moteur_python\dist\backend.exe" "release\backend\"
+          
+          # Recherche automatique et robuste de l'exécutable backend compilé
+          $backendExe = Get-ChildItem -Path "pycno_core" -Filter "backend.exe" -Recurse | Select-Object -First 1
+          if ($backendExe) {
+              Write-Host "Backend trouve : $($backendExe.FullName)"
+              Copy-Item -Force $backendExe.FullName "release\backend\"
+              $internalDir = Join-Path $backendExe.DirectoryName "_internal"
+              if (Test-Path $internalDir) {
+                  Copy-Item -Recurse -Force $internalDir "release\backend\"
+              }
+          } else {
+              throw "Erreur critique : backend.exe introuvable sous pycno_core !"
+          }
 
       - name: Install Inno Setup via Chocolatey
         run: choco install innosetup -y
@@ -58,13 +67,6 @@ jobs:
       - name: Compile Inno Setup Installer
         run: |
           iscc pycnolab.iss
-
-      - name: Display Hashes for VirusTotal Check
-        shell: pwsh
-        run: |
-          Write-Host "--- HASHES ---"
-          Get-FileHash -Path "build\windows\x64\runner\Release\pycnolab.exe" -Algorithm SHA256
-          Get-FileHash -Path "pycno_core\moteur_python\dist\backend.exe" -Algorithm SHA256
 
       - name: Upload Artifacts (ZIP)
         uses: actions/upload-artifact@v4
