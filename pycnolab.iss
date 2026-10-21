@@ -26,8 +26,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; 1. Fichiers du client Flutter (UI)
 Source: "release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "backend\*"
 
-; 2. Contenu complet du moteur Python (backend.exe, _internal, python314.dll, etc.)
-Source: "pycno_core\dist\pycnolab_engine\*"; DestDir: "{app}\backend"; Flags: ignoreversion recursesubdirs createallsubdirs
+; 2. Contenu complet du moteur Python (backend.exe, dossier _internal, python314.dll, etc.)
+Source: "pycno_core\dist\backend\*"; DestDir: "{app}\backend"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
