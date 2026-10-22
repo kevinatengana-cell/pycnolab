@@ -390,7 +390,7 @@ def route_exporter_essai_excel(type_essai: str, payload: EssaiExcelRequest):
 
     modele_defaut = _RESOURCE_ROOT.joinpath(
         'moteur_python',
-        'modeles',
+        'models',
         f'MODELE_{type_essai.upper()}_VIDE.xlsx',
     )
     chemin_modele = payload.chemin_modele or str(modele_defaut)

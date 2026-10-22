@@ -14,10 +14,13 @@ for pkg in ('fastapi', 'uvicorn', 'pydantic', 'python_multipart'):
     ext_hiddenimports.extend(h)
 
 # 2. Tes fichiers de données internes
-datas = collect_data_files(
-    'moteur_python.modeles',
-    includes=['*.xlsx'],
-)
+models_dir = core_root / 'moteur_python' / 'models'
+if not models_dir.is_dir():
+    raise FileNotFoundError(f'Modeles Excel introuvables : {models_dir}')
+model_files = sorted(models_dir.glob('*.xlsx'))
+if not model_files:
+    raise FileNotFoundError(f'Aucun modele .xlsx dans : {models_dir}')
+datas = [(str(model_file), 'moteur_python/models') for model_file in model_files]
 datas += collect_data_files('moteur_python.protocoles')
 datas += ext_datas  # On ajoute les datas externes
 

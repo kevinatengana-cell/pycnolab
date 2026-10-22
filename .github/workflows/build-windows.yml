@@ -29,6 +29,22 @@ jobs:
           # Utilise votre fichier .spec officiel
           pyinstaller --clean pycnolab_engine.spec
 
+      - name: Validate bundled Excel model templates
+        shell: pwsh
+        run: |
+          $modelDir = "pycno_core\dist\backend\_internal\moteur_python\models"
+          $required = @(
+            "MODELE_TRACTION_VIDE.xlsx",
+            "MODELE_COMPRESSION_VIDE.xlsx",
+            "MODELE_FLEXION_VIDE.xlsx"
+          )
+          foreach ($name in $required) {
+            $path = Join-Path $modelDir $name
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Modèle Excel absent du bundle PyInstaller : $path"
+            }
+            Write-Host "Modèle inclus : $path"
+          }
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
