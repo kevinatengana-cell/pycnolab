@@ -45,6 +45,7 @@ jobs:
             }
             Write-Host "Modèle inclus : $path"
           }
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -77,6 +78,19 @@ jobs:
               throw "Erreur critique : backend.exe introuvable sous pycno_core !"
           }
 
+      - name: Runtime Visual C++ DLLs Integration
+        shell: pwsh
+        run: |
+          foreach ($d in 'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll') {
+            $src = "C:\Windows\System32\$d"
+            if (Test-Path $src) {
+              Copy-Item $src "release\" -Force
+              Write-Host "DLL $d ajoutee avec succes dans release\."
+            } else {
+              Write-Warning "DLL $d introuvable dans le System32 du runner."
+            }
+          }
+
       - name: Install Inno Setup via Chocolatey
         run: choco install innosetup -y
 
@@ -89,4 +103,4 @@ jobs:
         with:
           name: PycnoLab-Release-Bundle
           path: |
-            InstallerOutput\
+            InstallerOutput/
