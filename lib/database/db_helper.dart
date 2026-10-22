@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -30,9 +32,9 @@ class DbHelper {
 
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    final databasesPath = await databaseFactory.getDatabasesPath();
-    final path =
-        _inMemory ? inMemoryDatabasePath : p.join(databasesPath, _databaseName);
+    final path = _inMemory
+        ? inMemoryDatabasePath
+        : await _databaseFilePath();
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -86,6 +88,46 @@ class DbHelper {
       ),
     );
     return _database!;
+  }
+
+  Future<String> _databaseFilePath() async {
+    if (!Platform.isWindows) {
+      final databasesPath = await databaseFactory.getDatabasesPath();
+      await Directory(databasesPath).create(recursive: true);
+      return p.join(databasesPath, _databaseName);
+    }
+
+    final localAppData = Platform.environment['LOCALAPPDATA'];
+    if (localAppData == null || localAppData.trim().isEmpty) {
+      throw StateError('Windows ne fournit pas le dossier LOCALAPPDATA.');
+    }
+
+    final newDirectory = Directory(
+      p.join(localAppData, 'PycnoLab', 'data'),
+    );
+    await newDirectory.create(recursive: true);
+    final newPath = p.join(newDirectory.path, _databaseName);
+
+    // Conserver les donnees existantes si la base se trouvait a l'ancien endroit.
+    final oldDatabasesPath = await databaseFactory.getDatabasesPath();
+    final oldPath = p.join(oldDatabasesPath, _databaseName);
+    final normalizedOldPath = p.normalize(oldPath).toLowerCase();
+    final normalizedNewPath = p.normalize(newPath).toLowerCase();
+    final samePath = normalizedOldPath == normalizedNewPath;
+
+    if (!samePath &&
+        !await File(newPath).exists() &&
+        await File(oldPath).exists()) {
+      await File(oldPath).copy(newPath);
+
+      // Recuperer les ecritures SQLite non checkpointed si le mode WAL est actif.
+      final oldWal = File('$oldPath-wal');
+      if (await oldWal.exists()) {
+        await oldWal.copy('$newPath-wal');
+      }
+    }
+
+    return newPath;
   }
 
   Future<void> close() async {
