@@ -12,6 +12,16 @@ class PythonEngineService {
   static String get baseUrl => BackendApiEndpoint.baseUrl;
   static String get _baseUrl => baseUrl;
 
+  File _excelOutputFile(String destination) {
+    final trimmed = destination.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Le chemin de destination est obligatoire.');
+    }
+    return File(
+      trimmed.toLowerCase().endsWith('.xlsx') ? trimmed : '$trimmed.xlsx',
+    );
+  }
+
   Future<Map<String, dynamic>> analyserTraction(TractionPayload payload) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/api/calculs/traction'),
@@ -108,12 +118,7 @@ class PythonEngineService {
     required String cheminDestination,
     double l0Mm = 20.0,
   }) async {
-    final destination = cheminDestination.trim();
-    if (destination.isEmpty) {
-      throw ArgumentError('Le chemin de destination est obligatoire.');
-    }
-
-    final outputFile = File(destination);
+    final outputFile = _excelOutputFile(cheminDestination);
     if (outputFile.parent.path.isNotEmpty && !outputFile.parent.existsSync()) {
       await outputFile.parent.create(recursive: true);
     }
@@ -150,7 +155,7 @@ class PythonEngineService {
         'Erreur de génération Excel (${response.statusCode}) : ${response.body}',
       );
     }
-    final outputFile = File(cheminDestination.trim());
+    final outputFile = _excelOutputFile(cheminDestination);
     await outputFile.writeAsBytes(response.bodyBytes, flush: true);
     return outputFile.path;
   }
@@ -363,7 +368,7 @@ class PythonEngineService {
         'Erreur de génération du rapport (${response.statusCode}) : ${response.body}',
       );
     }
-    final outputFile = File(cheminDestination);
+    final outputFile = _excelOutputFile(cheminDestination);
     if (outputFile.parent.path.isNotEmpty && !outputFile.parent.existsSync()) {
       await outputFile.parent.create(recursive: true);
     }

@@ -47,9 +47,7 @@ class _ActivationScreenState extends State<ActivationScreen> {
       if (!success) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Clé invalide ou déjà utilisée. '
-              'Essai 24 h : PYCNO-TEST-24H. '
-              'Essai 7 jours : PYCNO-TEST-7D.';
+          _errorMessage = 'Clé invalide ou déjà utilisée.';
         });
         return;
       }
@@ -138,7 +136,7 @@ class _ActivationScreenState extends State<ActivationScreen> {
                         ),
                         decoration: InputDecoration(
                           labelText: 'Clé de licence',
-                          hintText: 'ex: PYCNO-TEST-7D',
+                          hintText: 'Saisir votre clé',
                           hintStyle: TextStyle(
                             color: Colors.grey.shade400,
                             letterSpacing: 1.0,
@@ -179,43 +177,12 @@ class _ActivationScreenState extends State<ActivationScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.info_outline,
-                                    size: 14, color: Color(0xFF6B7280)),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Essai 24 h : PYCNO-TEST-24H',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF6B7280),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Essai 7 jours : PYCNO-TEST-7D',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6B7280),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                      const Text(
+                        'Saisissez la clé de licence qui vous a été communiquée.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
                         ),
                       ),
                     ],

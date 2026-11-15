@@ -34,6 +34,7 @@ class BackendLauncherService {
   Timer? _heartbeatTimer;
   Completer<int>? _portBound;
   Future<void>? _demarrageEnCours;
+  Directory? _portHandshakeDirectory;
   void Function(String)? _onStatus;
   String? _dernierExecutableLance;
   List<String> _derniersArguments = <String>[];
@@ -257,8 +258,17 @@ class BackendLauncherService {
         'scripts\\build_windows_release.ps1.',
       );
     }
-    final process = await Process.start(executablePath, [], runInShell: false);
-    _attacherAuProcessus(process);
+    final handshakeDirectory =
+        await Directory.systemTemp.createTemp('pycnolab_backend_');
+    _portHandshakeDirectory = handshakeDirectory;
+    final portFile = File(path.join(handshakeDirectory.path, 'port'));
+    _derniersArguments = <String>['--port-file', portFile.path];
+    final process = await Process.start(
+      executablePath,
+      _derniersArguments,
+      runInShell: false,
+    );
+    _attacherAuProcessus(process, portFile: portFile);
   }
 
   Future<void> _demarrerBackendDepuisSources() async {
@@ -327,10 +337,10 @@ class BackendLauncherService {
     return null;
   }
 
-  void _attacherAuProcessus(Process process) {
+  void _attacherAuProcessus(Process process, {File? portFile}) {
     _process = process;
     final portBound = _portBound!;
-    
+
     // Tampon local pour capturer l'intégralité des erreurs stderr du processus Python
     final List<String> errorLines = [];
 
@@ -379,6 +389,10 @@ class BackendLauncherService {
       }
     });
 
+    if (portFile != null) {
+      unawaited(_attendrePortDansFichier(portFile, process, portBound));
+    }
+
     unawaited(
       process.exitCode.then((code) {
         _heartbeatTimer?.cancel();
@@ -415,6 +429,41 @@ class BackendLauncherService {
         }
       }),
     );
+  }
+
+  Future<void> _attendrePortDansFichier(
+    File portFile,
+    Process process,
+    Completer<int> portBound,
+  ) async {
+    while (!portBound.isCompleted && identical(_process, process)) {
+      try {
+        if (await portFile.exists()) {
+          final value = (await portFile.readAsString()).trim();
+          if (value.isNotEmpty) {
+            final port = int.tryParse(value);
+            if (port == null || port < 1 || port > 65535) {
+              portBound.completeError(
+                StateError('Port backend invalide : $value'),
+              );
+            } else {
+              _portPublie = true;
+              BackendApiEndpoint.bindPort(port);
+              portBound.complete(port);
+              _lancerHeartbeat();
+            }
+            return;
+          }
+        }
+      } on Object catch (error, stackTrace) {
+        if (!portBound.isCompleted) {
+          portBound.completeError(error, stackTrace);
+        }
+        return;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
   }
 
   void _lancerHeartbeat() {
@@ -457,14 +506,24 @@ class BackendLauncherService {
 
     final process = _process;
     _process = null;
-    if (process == null) return;
+    if (process != null) {
+      process.kill();
+      try {
+        await process.exitCode.timeout(const Duration(seconds: 2));
+      } on TimeoutException {
+        process.kill(ProcessSignal.sigkill);
+        await process.exitCode;
+      }
+    }
 
-    process.kill();
-    try {
-      await process.exitCode.timeout(const Duration(seconds: 2));
-    } on TimeoutException {
-      process.kill(ProcessSignal.sigkill);
-      await process.exitCode;
+    final handshakeDirectory = _portHandshakeDirectory;
+    _portHandshakeDirectory = null;
+    if (handshakeDirectory != null && await handshakeDirectory.exists()) {
+      try {
+        await handshakeDirectory.delete(recursive: true);
+      } on FileSystemException catch (error) {
+        _status('Nettoyage du fichier de démarrage impossible : $error');
+      }
     }
   }
 }

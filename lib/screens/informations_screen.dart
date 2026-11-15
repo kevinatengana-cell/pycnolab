@@ -448,7 +448,7 @@ class _InformationsScreenState extends State<InformationsScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                _detailRow('Clé de licence', license.key, isCode: true),
+                _detailRow('Clé de licence', '••••••••', isCode: true),
                 _detailRow('Durée totale', '${license.totalDays} jour(s)'),
                 _detailRow(
                     'Date d’activation', _formatDate(license.activationDate)),

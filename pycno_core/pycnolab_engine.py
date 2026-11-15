@@ -60,6 +60,12 @@ def _setup_logging(log_file: Path) -> None:
     logging.getLogger("uvicorn.access").addFilter(_QuietAccess())
 
 
+def _publier_port(port: int, fichier: Path) -> None:
+    temporaire = fichier.with_suffix(fichier.suffix + ".tmp")
+    temporaire.write_text(f"{port}\n", encoding="ascii")
+    temporaire.replace(fichier)
+
+
 async def _run(args: argparse.Namespace, data_dir: Path) -> int:
     import uvicorn
 
@@ -84,6 +90,8 @@ async def _run(args: argparse.Namespace, data_dir: Path) -> int:
         return 3
 
     log.info("Moteur prêt sur 127.0.0.1:%d (données : %s)", port, data_dir)
+    if args.port_file:
+        _publier_port(port, Path(args.port_file))
     print(f"PORT_BOUND:{port}", flush=True)
 
     await serve_task
@@ -94,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pycnolab_engine")
     parser.add_argument("--port", type=int, default=0, help="0 = port libre")
     parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--port-file", default=None)
     args, unknown = parser.parse_known_args(argv)
 
     data_dir = Path(args.data_dir) if args.data_dir else default_data_dir()

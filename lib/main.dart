@@ -155,6 +155,7 @@ class _EcranDemarrage extends StatefulWidget {
 
 class _EcranDemarrageState extends State<_EcranDemarrage> {
   String? _erreur;
+  String? _statut;
 
   @override
   void initState() {
@@ -163,6 +164,13 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
   }
 
   Future<void> _demarrerBackend() async {
+    if (mounted) {
+      setState(() {
+        _erreur = null;
+        _statut = 'Démarrage du moteur Python...';
+      });
+    }
+
     final launcher = backendLauncher;
     if (launcher == null) {
       if (mounted) {
@@ -172,7 +180,9 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
     }
 
     try {
-      await launcher.demarrer();
+      await launcher.demarrer(onStatus: (message) {
+        if (mounted) setState(() => _statut = message);
+      });
       if (mounted) Navigator.of(context).pushReplacementNamed('/home');
     } catch (error) {
       if (mounted) {
@@ -229,15 +239,25 @@ class _EcranDemarrageState extends State<_EcranDemarrage> {
                       const SizedBox(height: 24),
 
                       if (_erreur == null)
-                        const Row(
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
+                            const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
                                 color: Color(0xFF1B5E20),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                _statut ?? 'Démarrage du moteur Python...',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ],
