@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:path/path.dart' as p;
 
+import '../services/app_storage_paths.dart';
+
 // =============================================================================
 // MODÈLES DE DONNÉES & CLASSES AUXILIAIRES
 // =============================================================================
@@ -364,18 +366,13 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
       },
       'validation': {
         'formule_valide': _syntaxValidation.isValid,
-        'resultat_sandbox': _sandboxResult?.isSuccess == true
-            ? _sandboxResult!.value
-            : null,
+        'resultat_sandbox':
+            _sandboxResult?.isSuccess == true ? _sandboxResult!.value : null,
       },
     };
 
     try {
-      final exeDir = File(Platform.resolvedExecutable).parent;
-      final protocoleDir = Directory(p.join(exeDir.path, 'protocoles'));
-      if (!await protocoleDir.exists()) {
-        await protocoleDir.create(recursive: true);
-      }
+      final protocoleDir = await getUserProtocolDirectory();
 
       final slug = _nomProtocoleCtrl.text
           .trim()
@@ -703,9 +700,7 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
             isActive: _currentStep >= 1,
             state: _currentStep > 1
                 ? StepState.complete
-                : (_currentStep == 1
-                    ? StepState.editing
-                    : StepState.indexed),
+                : (_currentStep == 1 ? StepState.editing : StepState.indexed),
             content: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -772,9 +767,8 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
                                     v.label = val;
                                     v.key = _slugify(val);
                                     _sandboxValues.remove(ancienneKey);
-                                    _sandboxValues[v.key] = ancienneValeur ??
-                                        v.valeurDefaut ??
-                                        0.0;
+                                    _sandboxValues[v.key] =
+                                        ancienneValeur ?? v.valeurDefaut ?? 0.0;
                                     _validerFormuleEnTempsReel();
                                   },
                                 ),
@@ -866,9 +860,7 @@ class _FormulaireProtocoleScreenState extends State<FormulaireProtocoleScreen> {
             isActive: _currentStep >= 2,
             state: _currentStep > 2
                 ? StepState.complete
-                : (_currentStep == 2
-                    ? StepState.editing
-                    : StepState.indexed),
+                : (_currentStep == 2 ? StepState.editing : StepState.indexed),
             content: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(

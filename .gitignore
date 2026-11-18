@@ -33,6 +33,7 @@ migrate_working_dir/
 /build/
 /pycno_core/build/
 /pycno_core/dist/
+/pycno_core/.venv_build/
 /coverage/
 
 # Symbolication related

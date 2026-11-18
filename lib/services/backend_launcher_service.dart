@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
@@ -70,7 +71,8 @@ class BackendLauncherService {
 
     for (int attempt = 1; attempt <= _maxStartupRetries; attempt++) {
       try {
-        _status('Tentative de lancement du moteur ($attempt/$_maxStartupRetries)...');
+        _status(
+            'Tentative de lancement du moteur ($attempt/$_maxStartupRetries)...');
         await _demarrerInterne();
         return;
       } catch (error, stackTrace) {
@@ -93,7 +95,8 @@ class BackendLauncherService {
         }
 
         final attente = Duration(seconds: 2 * attempt);
-        _status('Échec temporaire : nouvelle tentative dans ${attente.inSeconds} s.');
+        _status(
+            'Échec temporaire : nouvelle tentative dans ${attente.inSeconds} s.');
         await Future.delayed(attente);
       }
     }
@@ -188,6 +191,68 @@ class BackendLauncherService {
   /// Renvoie les derniers logs pour inclusion dans un message d'erreur.
   String get derniersLogs => _derniersLogs.join('\n');
 
+  Future<void> _verifierIntegriteBackend(
+    String backendDirectory,
+    String executablePath,
+  ) async {
+    final executable = File(executablePath);
+    final internalDirectory =
+        Directory(path.join(backendDirectory, '_internal'));
+    if (!await executable.exists()) {
+      throw StateError('Backend installé introuvable : $executablePath');
+    }
+    if (!await internalDirectory.exists()) {
+      throw StateError(
+        'Dossier backend requis introuvable : ${internalDirectory.path}',
+      );
+    }
+
+    final manifest = File(path.join(backendDirectory, 'manifest.sha256'));
+    if (!await manifest.exists()) {
+      throw StateError(
+        'Manifeste d’intégrité du backend introuvable : ${manifest.path}',
+      );
+    }
+
+    String? expectedHash;
+    for (final line in await manifest.readAsLines()) {
+      final match = RegExp(r'^([0-9a-fA-F]{64})\s+(.+)$').firstMatch(line);
+      if (match == null) continue;
+      final relativePath = match.group(2)!.replaceAll('\\', '/');
+      if (relativePath == 'backend.exe') {
+        expectedHash = match.group(1)!.toLowerCase();
+        break;
+      }
+    }
+    if (expectedHash == null) {
+      throw StateError(
+        'Le manifeste ne contient pas le hash de backend.exe.',
+      );
+    }
+
+    final actualHash = (await sha256.bind(executable.openRead()).first)
+        .toString()
+        .toLowerCase();
+    final matches = actualHash == expectedHash;
+    final result = matches ? 'OK' : 'MISMATCH';
+    final logDirectory = _repertoireDiagnostic();
+    await logDirectory.create(recursive: true);
+    final logFile = File(path.join(logDirectory.path, 'backend_launcher.log'));
+    await logFile.writeAsString(
+      'Intégrité backend.exe : $result; attendu=$expectedHash; obtenu=$actualHash\n',
+      mode: FileMode.append,
+      flush: true,
+    );
+
+    if (!matches) {
+      throw StateError(
+        'Fichier du moteur altéré ou corrompu, réinstallez l’application '
+        'ou contactez le support. '
+        'Hash attendu : $expectedHash ; hash obtenu : $actualHash.',
+      );
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Health check
   // ---------------------------------------------------------------------
@@ -251,13 +316,7 @@ class BackendLauncherService {
     _dernierRepertoireTravail = Directory.current.path;
     _dernierCodeSortie = null;
 
-    if (!File(executablePath).existsSync()) {
-      throw StateError(
-        'Backend installé introuvable : $executablePath\n'
-        'Reconstruisez le bundle Release avec '
-        'scripts\\build_windows_release.ps1.',
-      );
-    }
+    await _verifierIntegriteBackend(backendDirectory, executablePath);
     final handshakeDirectory =
         await Directory.systemTemp.createTemp('pycnolab_backend_');
     _portHandshakeDirectory = handshakeDirectory;
@@ -382,10 +441,10 @@ class BackendLauncherService {
         .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
         .listen((line) {
-        if (line.trim().isNotEmpty) {
-          if (errorLines.length >= _maxLogs) errorLines.removeAt(0);
-          errorLines.add(line.trim());
-          _status('ERR: ${line.trim()}');
+      if (line.trim().isNotEmpty) {
+        if (errorLines.length >= _maxLogs) errorLines.removeAt(0);
+        errorLines.add(line.trim());
+        _status('ERR: ${line.trim()}');
       }
     });
 
@@ -536,11 +595,11 @@ class BackendProcessExitException implements Exception {
 
   String get codeFormate {
     final unsigned = code & 0xffffffff;
-    final hexadecimal = unsigned.toRadixString(16).padLeft(8, '0').toUpperCase();
+    final hexadecimal =
+        unsigned.toRadixString(16).padLeft(8, '0').toUpperCase();
     return '$code, 0x$hexadecimal';
   }
 
   @override
-  String toString() =>
-      'Le backend s’est arrêté (code $codeFormate).$details';
+  String toString() => 'Le backend s’est arrêté (code $codeFormate).$details';
 }

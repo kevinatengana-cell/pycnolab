@@ -11,6 +11,7 @@ import '../models/capture_essai_model.dart';
 import '../database/capture_dao.dart';
 import '../services/license_service.dart';
 import '../services/history_service.dart';
+import '../services/app_storage_paths.dart';
 import '../services/python_engine_service.dart';
 import 'compare_screen.dart';
 import 'config_essai_screen.dart';
@@ -214,8 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
       geometrieCompression:
           capture.typeEssai == 'compression' ? geometrie : null,
       geometrieFlexion: capture.typeEssai == 'flexion' ? geometrie : null,
-      geometrieTraction:
-          capture.typeEssai == 'traction' ? geometrie : null,
+      geometrieTraction: capture.typeEssai == 'traction' ? geometrie : null,
       forme: forme,
     );
     _afficherMessage('Rapport réexporté : $output');
@@ -315,8 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 2. Scan du dossier /protocoles
     try {
-      final exeDir = File(Platform.resolvedExecutable).parent;
-      final protocoleDir = Directory(p.join(exeDir.path, 'protocoles'));
+      final protocoleDir = await getUserProtocolDirectory();
 
       if (await protocoleDir.exists()) {
         final fichiers = protocoleDir
@@ -329,8 +328,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _protocolesLocaux = fichiers;
           });
         }
-      } else {
-        await protocoleDir.create(recursive: true);
       }
     } catch (e) {
       debugPrint("Erreur lors de la lecture des protocoles: $e");
@@ -1140,8 +1137,8 @@ class _MotifPainter extends CustomPainter {
             ..strokeWidth = 12
             ..strokeCap = StrokeCap.round,
         );
-        canvas.drawCircle(p(.5, .545), 7,
-            Paint()..color = Colors.white.withOpacity(0.9));
+        canvas.drawCircle(
+            p(.5, .545), 7, Paint()..color = Colors.white.withOpacity(0.9));
         fleche(p(.5, .0), p(.5, .45));
         break;
 

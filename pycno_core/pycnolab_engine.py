@@ -1,4 +1,4 @@
-"""Point d'entrée du backend PycnoLab, lancé par Flutter.
+"""Point d'entrée du backend PycnoLab, lancé par Flutter ou Python embarqué.
 
 Annonce « PORT_BOUND:<port> » sur stdout. Tous les arguments sont optionnels.
 """
@@ -11,7 +11,7 @@ import multiprocessing
 import os
 import socket
 import sys
-from logging.handlers import RotatingFileHandler
+from datetime import datetime
 from pathlib import Path
 
 log = logging.getLogger("pycnolab.engine")
@@ -24,16 +24,14 @@ def default_data_dir() -> Path:
 
 
 def _ensure_streams(log_file: Path) -> None:
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+
     stream = open(log_file, "a", encoding="utf-8", buffering=1)
     if sys.stdout is None:
         sys.stdout = stream
     if sys.stderr is None:
         sys.stderr = stream
-    for s in (sys.stdout, sys.stderr):
-        try:
-            s.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
 
 
 class _QuietAccess(logging.Filter):
@@ -47,16 +45,11 @@ def _setup_logging(log_file: Path) -> None:
     root = logging.getLogger()
     root.setLevel(logging.INFO)
     for h in list(root.handlers):
+        h.close()
         root.removeHandler(h)
-    fh = RotatingFileHandler(
-        log_file, maxBytes=2_000_000, backupCount=3, encoding="utf-8"
-    )
+    fh = logging.FileHandler(log_file, encoding="utf-8")
     fh.setFormatter(fmt)
     root.addHandler(fh)
-    sh = logging.StreamHandler(sys.stderr)
-    sh.setLevel(logging.WARNING)
-    sh.setFormatter(fmt)
-    root.addHandler(sh)
     logging.getLogger("uvicorn.access").addFilter(_QuietAccess())
 
 
@@ -99,25 +92,34 @@ async def _run(args: argparse.Namespace, data_dir: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="pycnolab_engine")
-    parser.add_argument("--port", type=int, default=0, help="0 = port libre")
-    parser.add_argument("--data-dir", default=None)
-    parser.add_argument("--port-file", default=None)
-    args, unknown = parser.parse_known_args(argv)
-
-    data_dir = Path(args.data_dir) if args.data_dir else default_data_dir()
-    (data_dir / "logs").mkdir(parents=True, exist_ok=True)
-    log_file = data_dir / "logs" / "engine.log"
-    _ensure_streams(log_file)
-    _setup_logging(log_file)
-    if unknown:
-        log.warning("Arguments ignorés : %s", unknown)
-
-    os.environ["PYCNOLAB_DATA_DIR"] = str(data_dir)
+    local_app_data = os.environ.get("LOCALAPPDATA") or str(Path.home())
+    log_file = Path(local_app_data) / "PycnoLab" / "logs" / "backend.log"
     try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        _ensure_streams(log_file)
+        _setup_logging(log_file)
+        log.info("Démarrage du moteur PycnoLab")
+        log.info("Version Python : %s", sys.version.replace("\n", " "))
+        log.info("Exécutable : %s", sys.executable)
+        log.info("Date : %s", datetime.now().astimezone().isoformat())
+
+        parser = argparse.ArgumentParser(prog="pycnolab_engine")
+        parser.add_argument("--port", type=int, default=0, help="0 = port libre")
+        parser.add_argument("--data-dir", default=None)
+        parser.add_argument("--port-file", default=None)
+        args, unknown = parser.parse_known_args(argv)
+
+        data_dir = Path(args.data_dir) if args.data_dir else default_data_dir()
+        (data_dir / "logs").mkdir(parents=True, exist_ok=True)
+        if unknown:
+            log.warning("Arguments ignorés : %s", unknown)
+
+        os.environ["PYCNOLAB_DATA_DIR"] = str(data_dir)
         return asyncio.run(_run(args, data_dir))
     except Exception:
-        log.exception("Échec du démarrage du moteur")
+        logging.getLogger("pycnolab.engine").exception(
+            "Échec du démarrage du moteur"
+        )
         return 1
 
 
